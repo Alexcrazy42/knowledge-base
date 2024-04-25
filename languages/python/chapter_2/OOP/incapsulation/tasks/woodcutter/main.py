@@ -16,6 +16,7 @@ wood_cutter.main_word()
 
 player = Player(wood_cutter, notifier)
 
-while True:
+do = True
+while do:
     if player.make_action() == False:
-        break
+        do = False
