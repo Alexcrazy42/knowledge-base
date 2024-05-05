@@ -1,0 +1,75 @@
+$media_size__desktop: 1301px;
+$media_size__tablet: 1300px;
+$media_size__mobile: 767px;
+
+@mixin respond-to-desktop {
+    @media all and (min-width: $media_size__desktop) {
+        @content;
+    }
+}
+
+@mixin respond-to-tablet {
+    @media all and (min-width: $media_size__mobile + 1px) and (max-width: $media_size__tablet) {
+        @content;
+    }
+}
+
+@mixin respond-to-mobile {
+    @media all and (max-width: $media_size__mobile) {
+        @content;
+    }
+}
+
+@mixin respond-to-not-mobile {
+    @media all and (min-width: $media_size__mobile + 1px) {
+        @content;
+    }
+}
+
+@mixin respond-to-not-desktop {
+    @media all and (max-width: $media_size__desktop - 1px) {
+        @content;
+    }
+}
+
+@mixin respond-to-not-tablet {
+    @media all and (min-width: $media_size__desktop), (max-width: $media_size__mobile) {
+        @content;
+    }
+}
+
+@mixin min-width($min_width) {
+    @media all and (min-width: $min_width) {
+        @content;
+    }
+}
+
+@mixin max-width($max_width) {
+    @media all and (max-width: $max_width) {
+        @content;
+    }
+}
+
+@mixin text-ellipsis($max-width: 100%) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: $max-width;
+}
+
+@mixin grid_cards_container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+@mixin grid_card($cards_count: 4, $space_size: 10px) {
+    //width: calc(100% / 3 - (20px / 3));
+    width: calc(100% / #{$cards_count} - (#{$space_size} * (#{$cards_count} - 1) / #{$cards_count}));
+
+    margin-right: $space_size;
+    margin-bottom: $space_size;
+
+    &:nth-child(#{$cards_count}n) {
+        margin-right: 0;
+    }
+}

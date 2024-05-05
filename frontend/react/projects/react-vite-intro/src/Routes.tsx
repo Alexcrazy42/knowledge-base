@@ -2,20 +2,36 @@ import { Router } from '@lib/Router'
 
 import { ROUTES } from '@constants/routes';
 import Main from '@pages/Main'
-import About from '@pages/About';
+import Settings from '@pages/Settings';
 import PageNotFound from '@pages/PageNotFound';
+import HrEmployees from '@pages/HrEmployees';
+import { MainLayout } from '@layouts/main';
 
 const routes = {
     [ROUTES.MAIN]: (
-        <Main/>
+        <MainLayout privateRoute>
+            <Main/>
+        </MainLayout>
+        
     ),
 
-    [ROUTES.ABOUT]: (
-        <About />
+    [ROUTES.SETTINGS]: (
+        <MainLayout privateRoute>
+            <Settings />
+        </MainLayout>
+    ),
+
+    [ROUTES.HR_EMPLOYEES]: (
+        <MainLayout privateRoute>
+            <HrEmployees />
+        </MainLayout>
     ),
 
     '': (
-        <PageNotFound />
+        <MainLayout privateRoute>
+            <PageNotFound />
+        </MainLayout>
+        
     )
 }
 

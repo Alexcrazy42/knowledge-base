@@ -2,7 +2,9 @@ const routes = {
     // Главная
     MAIN: '/',
 
-    ABOUT: '/about'
+    SETTINGS: '/settings',
+
+    HR_EMPLOYEES: '/hr-employees'
 }
 
 // Удалить возможные "//" вначале урла

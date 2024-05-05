@@ -1,23 +1,12 @@
-import '@styles/App.css'
-import Button from '@components/Button'
-import { useNavigate  } from 'react-router-dom'
-import { ROUTES } from '@constants/routes'
-import About from '@pages/About'
+import '@styles/Main.css'
 
 function Main() {
-  let navigate = useNavigate(); 
-  const routeChange = () =>{ 
-    let path = ROUTES.ABOUT; 
-    navigate(path);
-  }
 
   return (
     <>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <Button name = "1" onClick={routeChange} />
+      <div id="main-page">
+        <h1>Главная</h1>
       </div>
-      
       
     </>
   )

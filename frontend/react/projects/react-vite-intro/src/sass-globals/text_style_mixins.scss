@@ -1,0 +1,26 @@
+@import "variables";
+
+$base_font: $font-family_open-sans;
+
+@mixin typography($name, $color: '') {
+    font-family: $base_font;
+
+    @if ($name == 'text test') {
+        font-weight: 300;
+        font-size: 16px;
+        line-height: 20.8px;
+
+    } @else if ($name == 'test test 2') {
+        font-size: 16px;
+        line-height: 22px;
+        font-weight: 400;
+    }
+    @else {
+        @error "Invalid typography name! Given: '#{$name}'";
+    }
+
+    @if ($color != '') {
+        color: color($color);
+    }
+}
+

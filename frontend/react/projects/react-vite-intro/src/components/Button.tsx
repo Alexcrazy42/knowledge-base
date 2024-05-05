@@ -1,13 +1,13 @@
 import { useState } from 'react'
 
 
-function Button({ name, onClick }) {
+function Button({ name }) {
     const [count, setCount] = useState(0)
 
 
     return(
         <>
-            <button onClick={() => onClick}>
+            <button>
                 {name}
             </button>
         </>

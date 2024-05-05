@@ -3,6 +3,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import {PreRenderedAsset} from 'rollup'
 
+server: {
+  host: true
+}
+
 export default defineConfig({
   build: {
     target: 'esnext',
@@ -26,6 +30,7 @@ export default defineConfig({
       '@declarations': path.resolve(__dirname, 'src/declarations'),
       '@constants': path.resolve(__dirname, 'src/constants'),
       '@lib': path.resolve(__dirname, 'src/lib'),
+      '@layouts': path.resolve(__dirname, 'src/layouts'),
     }
   },
   plugins: [react()]
