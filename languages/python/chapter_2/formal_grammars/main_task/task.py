@@ -1,7 +1,7 @@
 class FSA:
     def __init__(self):
         self.transition_table = [
-            [1, 1, 2, 2, 1],
+            [1, 1, 1, 2, 1],
             [1, 1, 1, 1, 1],
             [1, 3, 2, 2, 1],
             [1, 1, 4, 5, 1],
