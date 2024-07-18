@@ -22,7 +22,7 @@ class Forest:
     woods_in_world = []
 
     def init_forest(self):
-        print("hello, forecast!")
+        print("hello, forest!")
         
         wood_count = randint(5, 10)
         for i in range(wood_count):
@@ -31,15 +31,6 @@ class Forest:
         print(f"Создано {wood_count} деревьев!")
 
     def get_new_tree(self):
-        # random_num = randint(0, 1)
-        # cumulative_prob = 0
-        # for prob, category in self.categories.items():
-        #     cumulative_prob += prob
-
-        #     if(random_num < cumulative_prob):
-        #         category_count = len(category)
-        #         random_index = randint(0, category_count-1)
-        #         return random_index
         return randint(0, len(self.all_woods)-1)
             
     def delete_tree(self, random_index):
