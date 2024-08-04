@@ -99,14 +99,109 @@ request.responseType = "json";
 request.send();
 
 request.onload = function () {
-    console.log(request.response);
     var superHeroes = request.response;
     populateHeader(superHeroes);
     showHeroes(superHeroes);
 };
 
+console.log("Starting");
 
 
+
+async function fetchImage() {
+    var image;
+    const response = await fetch("https://i.sstatic.net/YtBbE.png");
+
+    if(!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    } else {
+        const myBlob = await response.blob();
+        const objectURL = URL.createObjectURL(myBlob);
+        const image = document.createElement("img");
+        image.src = objectURL;
+        document.body.appendChild(image);
+        return image;
+    }
+}
+
+function timeoutPromise(interval) {
+    return new Promise((resolve, reject) => {
+      setTimeout(function () {
+        resolve("done");
+      }, interval);
+    });
+}
+
+async function slowTimeTest() {
+    await timeoutPromise(3000);
+    await timeoutPromise(3000);
+    await timeoutPromise(3000);
+}
+
+async function fastTimeTest() {
+    const timeoutPromise1 = timeoutPromise(3000);
+    const timeoutPromise2 = timeoutPromise(3000);
+    const timeoutPromise3 = timeoutPromise(3000);
+  
+    await Promise.all([timeoutPromise1, timeoutPromise2, timeoutPromise3])
+}
+
+
+
+let startTime = Date.now();
+slowTimeTest().then(() => {
+  const finishTime = Date.now();
+  const timeTaken = finishTime - startTime;
+  console.log("Time taken in milliseconds to slow: " + timeTaken);
+});
+
+startTime = Date.now();
+fastTimeTest().then(() => {
+    const finishTime = Date.now();
+    const timeTaken = finishTime - startTime;
+    console.log("Time taken in milliseconds to fast: " + timeTaken);
+})
+
+
+
+async function func() {
+    const a = fetchImage()
+    .then((image) => {
+        console.log(image);
+    })
+    .catch((e) => {
+        console.log(
+        "There has been a problem with your fetch operation: " + e.message,
+        );
+    });
+
+    const b = loop();
+
+    const c = fetchImage()
+    .then((image) => {
+        console.log(image);
+    })
+    .catch((e) => {
+        console.log(
+        "There has been a problem with your fetch operation: " + e.message,
+        );
+    });
+    await Promise.all([a, b, c])
+}
+
+func();
+
+async function loop(){
+    for(var i = 0; i < 10; i++) {
+        await sleep(10);
+        console.log(`All ${i}!`);
+    }
+}
+
+
+async function sleep(milliseconds) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 function populateHeader(jsonObj) {
     var header = document.querySelector("header");
