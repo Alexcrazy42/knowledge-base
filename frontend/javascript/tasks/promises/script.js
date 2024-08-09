@@ -27,5 +27,3 @@ function alarm(delay, name) {
         }, delay);
       });
 }
-
-
