@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{F44B291F-AF89-471A-947B-488A93985B61}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		Directory.Build.targets = Directory.Build.targets
+		README.MD = README.MD
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kafka.Sample", "Kafka.Sample\Kafka.Sample.csproj", "{D46F7735-AE48-4030-AFEA-41D2645ADAF5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging.Kafka", "Messaging.Kafka\Messaging.Kafka.csproj", "{FFA33660-2367-41BF-9929-33A45183B10B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D46F7735-AE48-4030-AFEA-41D2645ADAF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D46F7735-AE48-4030-AFEA-41D2645ADAF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D46F7735-AE48-4030-AFEA-41D2645ADAF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D46F7735-AE48-4030-AFEA-41D2645ADAF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFA33660-2367-41BF-9929-33A45183B10B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFA33660-2367-41BF-9929-33A45183B10B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFA33660-2367-41BF-9929-33A45183B10B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFA33660-2367-41BF-9929-33A45183B10B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {795FFA11-FC99-4A82-A635-DBF5DC8E65D5}
+	EndGlobalSection
+EndGlobal

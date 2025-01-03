@@ -1,0 +1,11 @@
+<Project>
+	<PropertyGroup>
+	<CompanyName>Swipty</CompanyName>
+	<MicroserviceName>OnlineService</MicroserviceName>
+	<Company>$(CompanyName)</Company>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<RootNamespace>$(CompanyName).$(MicroserviceName).$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+	</PropertyGroup>
+</Project>

@@ -1,0 +1,10 @@
+﻿<Project>
+	<PropertyGroup>
+	<CompanyName>Swipty</CompanyName>
+	<MicroserviceName>Common.Kafka</MicroserviceName>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+	</PropertyGroup>
+</Project>
