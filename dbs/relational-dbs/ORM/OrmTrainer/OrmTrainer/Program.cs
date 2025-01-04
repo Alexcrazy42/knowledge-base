@@ -20,11 +20,35 @@ async Task ScheduleHandle()
 
     // await scheduleRepository.Task40Async();
     
-    // await scheduleRepository.Tas42Async();
+    // await scheduleRepository.Task42Async();
 
     // await scheduleRepository.Task43Async();
 
-    await scheduleRepository.Task57Async();
+    // await scheduleRepository.Task57Async();
+
+    // await scheduleRepository.Task44Async();
+
+    // await scheduleRepository.Task45Async();
+
+    // await scheduleRepository.Task60Async();
+
+    // await scheduleRepository.Task77Async();
+
+    // await scheduleRepository.Task63Async();
+
+    // await scheduleRepository.Task50Async();
+
+    // await scheduleRepository.Task49Async();
+
+    // await scheduleRepository.Task48Async();
+
+    // await scheduleRepository.Task47Async();
+
+    // await scheduleRepository.Task46Async();
+
+    // await scheduleRepository.Task75Async();
+
+    await scheduleRepository.Task41Async();
 }
 
 async Task AirTravelHandle()

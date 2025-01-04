@@ -37,7 +37,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Companies");
+                    b.ToTable("Companies", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.AirTravel.Passenger", b =>
@@ -55,7 +55,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Passengers");
+                    b.ToTable("Passengers", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.AirTravel.PassengerInTrip", b =>
@@ -83,7 +83,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasIndex("TripId");
 
-                    b.ToTable("PassengerInTrips");
+                    b.ToTable("PassengerInTrips", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.AirTravel.Trip", b =>
@@ -120,7 +120,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasIndex("CompanyId");
 
-                    b.ToTable("Trips");
+                    b.ToTable("Trips", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.Schedule.Schedule", b =>
@@ -159,7 +159,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasIndex("TimepairId");
 
-                    b.ToTable("Schedules");
+                    b.ToTable("Schedules", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.Schedule.SchoolClass", b =>
@@ -177,7 +177,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SchoolClasses");
+                    b.ToTable("SchoolClasses", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.Schedule.Student", b =>
@@ -209,7 +209,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.Schedule.StudentInClass", b =>
@@ -232,7 +232,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("StudentInClasses");
+                    b.ToTable("StudentInClasses", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.Schedule.Subject", b =>
@@ -249,7 +249,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.Schedule.Teacher", b =>
@@ -274,7 +274,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Teachers");
+                    b.ToTable("Teachers", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.Schedule.Timepair", b =>
@@ -293,7 +293,7 @@ namespace OrmTrainer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Timepairs");
+                    b.ToTable("Timepairs", (string)null);
                 });
 
             modelBuilder.Entity("OrmTrainer.Models.AirTravel.PassengerInTrip", b =>

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using OrmTrainer.Models.AirTravel;
 using OrmTrainer.Models.Schedule;
+using OrmTrainer.Models.Schedule.Views;
 
 namespace OrmTrainer.Data;
 
@@ -27,6 +28,8 @@ public class AppDbContext : DbContext
     
     public DbSet<Timepair> Timepairs { get; set; }
     
+    public DbSet<PeopleView> PeopleViews { get; set; }
+    
     public DbSet<PassengerInTrip> PassengerInTrips { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
@@ -41,5 +44,15 @@ public class AppDbContext : DbContext
         builder.UseNpgsql("Host=localhost;Port=5432;Database=orm-train;User Id=postgres;Password=123")
             .UseLoggerFactory(loggerFactory)
             .EnableSensitiveDataLogging();
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        builder.Entity<PeopleView>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("People");
+        });
+        base.OnModelCreating(builder);
     }
 }
