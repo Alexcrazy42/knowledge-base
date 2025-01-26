@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		--muted: 300 50% 50%;
+		--muted-foreground: 300 50% 20%;
+
+		--popover: 180 50% 50%;
+		--popover-foreground: 180 50% 90%;
+
+		--card: 120 50% 50%;
+		--card-foreground: 120 50% 90%;
+
+		--border: 60 50% 50%;
+		--input: 60 50% 50%;
+
+		--secondary: 210 50% 50%;
+		--secondary-foreground: 210 50% 90%;
+
+		--accent: 330 50% 50%;
+		--accent-foreground: 330 50% 90%;
+
+		--destructive: 0 100% 50%;
+		--destructive-foreground: 0 0% 100%;
+
+		--ring: 0 0% 0%;
+
+		--radius: 1rem;
+	}
+}
+
+body {
+	margin: 0;
+	font-family: 'Comic Sans MS', cursive, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	background-color: hsl(var(--muted));
+	color: hsl(var(--muted-foreground));
+}
+
+code {
+	font-family: 'Courier New', Courier, monospace;
+	background-color: hsl(var(--accent));
+	color: hsl(var(--accent-foreground));
+	padding: 0.5rem;
+	border-radius: var(--radius);
+}
+
+@layer base {
+	* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	*::-webkit-scrollbar {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	*::-webkit-scrollbar-thumb {
+		border-radius: calc(var(--radius) - 4px);
+		background-color: hsl(var(--muted-foreground) / 0.5) !important;
+	}
+
+	body::-webkit-scrollbar {
+		background-color: hsl(var(--muted));
+		width: 10px;
+	}
+
+	body::-webkit-scrollbar-thumb {
+		background-color: hsl(var(--accent));
+		border-radius: 40px;
+	}
+}

@@ -1,0 +1,21 @@
+﻿.anchor {
+    position: relative;
+    display: inline-block;
+}
+
+.anchor-button {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.anchored-element {
+    position: absolute;
+    top: 100%; /* Позиционируем элемент сразу под якорем */
+    left: 0;
+    width: 200px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    display: none; /* Скрываем элемент по умолчанию */
+}
