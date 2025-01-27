@@ -5,3 +5,7 @@ scrape_configs:
   - job_name: 'metricsapp'
     static_configs:
       - targets: ['host.docker.internal:5097']
+
+  - job_name: 'windows'
+    static_configs:
+      - targets: ['host.docker.internal:9182']

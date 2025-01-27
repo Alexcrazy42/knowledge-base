@@ -1,120 +1,119 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Prometheus;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 [ApiController]
 [Route("[controller]")]
 public class TestController : ControllerBase
 {
-    // Метрики
     private static readonly Counter RequestCount = Metrics
-        .CreateCounter("myapp_request_count", "Number of requests received.");
+        .CreateCounter("myapp_request_count", "Number of requests received.", new CounterConfiguration
+        {
+            LabelNames = new[] { "method", "endpoint" }
+        });
 
     private static readonly Counter ErrorCount = Metrics
-        .CreateCounter("myapp_error_count", "Number of requests that resulted in an error.");
+        .CreateCounter("myapp_error_count", "Number of requests that resulted in an error.", new CounterConfiguration
+        {
+            LabelNames = new[] { "method", "endpoint" }
+        });
 
     private static readonly Histogram RequestDuration = Metrics
-        .CreateHistogram("myapp_request_duration_seconds", "Duration of requests in seconds.");
+        .CreateHistogram("myapp_request_duration_seconds", "Duration of requests in seconds.", new HistogramConfiguration
+        {
+            LabelNames = new[] { "method", "endpoint" }
+        });
 
     private static readonly Gauge ActiveRequests = Metrics
-        .CreateGauge("myapp_active_requests", "Number of active requests.");
+        .CreateGauge("myapp_active_requests", "Number of active requests.", new GaugeConfiguration
+        {
+            LabelNames = new[] { "method", "endpoint" }
+        });
 
     private static readonly Histogram RequestSize = Metrics
-        .CreateHistogram("myapp_request_size_bytes", "Size of requests in bytes.");
+        .CreateHistogram("myapp_request_size_bytes", "Size of requests in bytes.", new HistogramConfiguration
+        {
+            LabelNames = new[] { "method", "endpoint" }
+        });
 
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> Get()
     {
-        // Увеличиваем счетчик активных запросов
-        ActiveRequests.Inc();
+        var method = "GET";
+        var endpoint = "Get";
 
-        // Фиксируем время начала обработки запроса
+        ActiveRequests.WithLabels(method, endpoint).Inc();
+
         var stopwatch = Stopwatch.StartNew();
 
         try
         {
-            // Логика обработки запроса
-            RequestCount.Inc();
+            RequestCount.WithLabels(method, endpoint).Inc();
 
-            // Пример: измерение размера запроса (если это POST/PUT запрос)
             if (Request.ContentLength.HasValue)
             {
-                RequestSize.Observe(Request.ContentLength.Value);
+                RequestSize.WithLabels(method, endpoint).Observe(Request.ContentLength.Value);
             }
 
-            // Имитация обработки запроса
-            Thread.Sleep(new Random().Next(50, 200)); // Задержка для имитации работы
+            await Task.Delay(new Random().Next(50, 200));
 
             return Ok("Hello, Prometheus!");
         }
         catch (Exception ex)
         {
-            // Увеличиваем счетчик ошибок
-            ErrorCount.Inc();
-
-            // Логируем ошибку (опционально)
-            Console.WriteLine($"Error: {ex.Message}");
+            ErrorCount.WithLabels(method, endpoint).Inc();
 
             return StatusCode(500, "Internal Server Error");
         }
         finally
         {
-            // Фиксируем время окончания обработки запроса
             stopwatch.Stop();
 
-            // Записываем длительность запроса в гистограмму
-            RequestDuration.Observe(stopwatch.Elapsed.TotalSeconds);
+            RequestDuration.WithLabels(method, endpoint).Observe(stopwatch.Elapsed.TotalSeconds);
 
-            // Уменьшаем счетчик активных запросов
-            ActiveRequests.Dec();
+            ActiveRequests.WithLabels(method, endpoint).Dec();
         }
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] string data)
+    public async Task<IActionResult> Post([FromBody] string data)
     {
-        // Увеличиваем счетчик активных запросов
-        ActiveRequests.Inc();
+        var method = "POST";
+        var endpoint = "Post";
 
-        // Фиксируем время начала обработки запроса
+        ActiveRequests.WithLabels(method, endpoint).Inc();
+
         var stopwatch = Stopwatch.StartNew();
 
         try
         {
-            // Логика обработки запроса
-            RequestCount.Inc();
+            RequestCount.WithLabels(method, endpoint).Inc();
 
-            // Измерение размера запроса
             if (Request.ContentLength.HasValue)
             {
-                RequestSize.Observe(Request.ContentLength.Value);
+                RequestSize.WithLabels(method, endpoint).Observe(Request.ContentLength.Value);
             }
 
-            // Имитация обработки запроса
-            Thread.Sleep(new Random().Next(50, 200)); // Задержка для имитации работы
+            await Task.Delay(new Random().Next(50, 200)); // Асинхронная задержка
 
             return Ok($"Received: {data}");
         }
         catch (Exception ex)
         {
-            // Увеличиваем счетчик ошибок
-            ErrorCount.Inc();
+            ErrorCount.WithLabels(method, endpoint).Inc();
 
-            // Логируем ошибку (опционально)
             Console.WriteLine($"Error: {ex.Message}");
 
             return StatusCode(500, "Internal Server Error");
         }
         finally
         {
-            // Фиксируем время окончания обработки запроса
             stopwatch.Stop();
 
-            // Записываем длительность запроса в гистограмму
-            RequestDuration.Observe(stopwatch.Elapsed.TotalSeconds);
+            RequestDuration.WithLabels(method, endpoint).Observe(stopwatch.Elapsed.TotalSeconds);
 
-            // Уменьшаем счетчик активных запросов
-            ActiveRequests.Dec();
+            ActiveRequests.WithLabels(method, endpoint).Dec();
         }
     }
 }
