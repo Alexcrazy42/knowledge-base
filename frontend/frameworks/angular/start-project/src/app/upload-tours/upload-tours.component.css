@@ -1,0 +1,16 @@
+.container {
+  max-width: 600px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+form input, form textarea {
+  margin-bottom: 1rem;
+}
+
+form button {
+  margin-top: 1rem;
+}

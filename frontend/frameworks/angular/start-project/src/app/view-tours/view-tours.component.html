@@ -1,0 +1,11 @@
+<div class="container">
+  <h2>Доступные туры</h2>
+  <ul>
+    <li *ngFor="let tour of tours">
+      <h3>{{ tour.name }}</h3>
+      <p>{{ tour.description }}</p>
+      <p>Цена: {{ tour.price }}$</p>
+      <button (click)="buyTour(tour)">Купить</button>
+    </li>
+  </ul>
+</div>
