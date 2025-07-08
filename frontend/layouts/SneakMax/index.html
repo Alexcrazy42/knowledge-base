@@ -1,0 +1,380 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Shop</title>
+</head>
+<body>
+    <header id="header" >
+        <div id="main-header">
+            <div class="logo">SneakMax</div>
+    
+            <nav class="nav-menu">
+            <a href="#">Каталог</a>
+            <a href="#">О нас</a>
+            <a href="#">Подбор товара</a>
+            <a href="#">Наша команда</a>
+            <a href="#">Доставка и оплата</a>
+            <a href="#">Контакты</a>
+            <a href="#" class="cart-link">
+                Корзина
+                <img class="icon" src="assets/basket.svg" alt="корзина">
+            </a>
+            </nav>
+        </div>
+
+
+        <div class="header-text">
+            <h1>Кроссовки известных брендов с доставкой по России и СНГ</h1>
+        </div>
+        
+        <div class="header-second-text">
+            <h3>
+                Мы продаем кроссовки брендов Nike, Adidas, Puma, Reebok, Converse и многие другие по низким ценам
+            </h3>
+        </div>
+
+        <button class="buy_link">
+            Перейти к покупкам
+        </button>
+
+        <h1 class="main-inscription">
+            SneakMax
+        </h1>
+    </header>
+
+    <main id="catalog">
+        <h1>Каталог</h1>
+
+        <div class="params-and-sneakers">
+            <div class="catalog-column" id="params">
+                <h3>Подбор по<br>параметрам</h3>
+    
+
+                <div id="money">
+                    <strong class="catalog__caption">Цена, руб</strong>
+                    <div class="catalog-price catalog__prop-inner">
+                        <div class="catalog-price__wrapper">
+                            <input type="text" class="catalog-price__input" id="input-0">
+                            <input type="text" class="catalog-price__input" id="input-1">
+                        </div>
+                        <div class="catalog-price__element" id="range-slider"></div>
+
+                    </div>
+                </div>
+                
+                <div id="gender">
+                    <h4>Пол</h4>
+                    <div class="gender-checkboxes">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="gender" value="male">
+                            <span class="custom-checkbox"></span>
+                            Мужской
+                        </label>
+                    
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="gender" value="female">
+                            <span class="custom-checkbox"></span>
+                            Женский
+                        </label>
+                    </div>
+                </div>
+                
+    
+                <div id="size-grid">
+                    <h4>Размер</h4>
+                    <div class="sizes">
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="36">
+                            <span>36</span>
+                        </label>
+                
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="37">
+                            <span>37</span>
+                        </label>
+                
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="38">
+                            <span>38</span>
+                        </label>
+                
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="39">
+                            <span>39</span>
+                        </label>
+                
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="40">
+                            <span>40</span>
+                        </label>
+                
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="41">
+                            <span>41</span>
+                        </label>
+                
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="42">
+                            <span>42</span>
+                        </label>
+                
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="43">
+                            <span>43</span>
+                        </label>
+
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="43">
+                            <span>44</span>
+                        </label>
+
+                        <label class="size-option">
+                            <input type="checkbox" name="size" value="43">
+                            <span>45</span>
+                        </label>
+                    </div>
+                </div>
+    
+                <div id="buttons-params">
+                    <button class="button-apply">Применить</button>
+    
+                    <button class="button-reset">Сбросить</button>
+                </div>
+    
+                
+            </div>
+    
+            <div class="catalog-column" id="sneakers">
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+                <div class="sneaker-card">
+                    <img src="assets/main-sneakers.jpg" alt="Кроссовки">
+                    <h5>Кроссовки Nike Air Force 1 '07 QS</h5>
+                    <h5>11 000 ₽ </h5>
+                </div>
+
+                <button>Показать еще</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- TODO: доделать по макету -->
+    <main id="about">
+        <div id="text">
+            <h1>Пара слов о нас</h1>
+            <h5>Спорт держит нас в форме. Учит дисциплине. Объединяет нас. Через спорт мы можем менять жизни. В том числе с помощью воодушевляющих историй спортсменов. Чтобы помочь тебе подняться и двигаться вперед.</h5>
+            
+            <div id="signature">
+                <span class="thick-dash"></span>
+                <h3>SneakMax</h3>
+            </div>
+        </div>
+    </main>
+
+    <main id="ideal">
+        <h2>Мы подберем идеальную пару для вас</h2>
+        <h3 id="bottom-border">Ответьте на три вопроса и мы вышлем каталог с самыми подходящими для вас моделями </h3>
+
+        <h2>Какой тип кроссовок рассматриваете?</h2>
+
+        <div id="bottom-border" class="sneakers">
+            <div class="sneaker-card">
+                <img src="assets/ideal-pair.jpg" alt="Кроссовки">
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="gender" value="male">
+                    <span class="custom-checkbox"></span>
+                    Кеды
+                </label>
+            </div>
+
+            <div class="sneaker-card">
+                <img src="assets/ideal-pair.jpg" alt="Кроссовки">
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="gender" value="male">
+                    <span class="custom-checkbox"></span>
+                    Кеды
+                </label>
+            </div>
+            <div class="sneaker-card">
+                <img src="assets/ideal-pair.jpg" alt="Кроссовки">
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="gender" value="male">
+                    <span class="custom-checkbox"></span>
+                    Кеды
+                </label>
+            </div>
+            <div class="sneaker-card">
+                <img src="assets/ideal-pair.jpg" alt="Кроссовки">
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="gender" value="male">
+                    <span class="custom-checkbox"></span>
+                    Кеды
+                </label>
+            </div>
+            <div class="sneaker-card">
+                <img src="assets/ideal-pair.jpg" alt="Кроссовки">
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="gender" value="male">
+                    <span class="custom-checkbox"></span>
+                    Кеды
+                </label>
+            </div>
+            <div class="sneaker-card">
+                <img src="assets/ideal-pair.jpg" alt="Кроссовки">
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="gender" value="male">
+                    <span class="custom-checkbox"></span>
+                    Кеды
+                </label>
+            </div>
+        </div>
+
+        <div id="end">
+            <h3>1 из 3</h3>
+            <button>Следующий шаг</button>
+        </div>
+
+        
+    </main>
+
+    <main id="our-team">
+        <div class="wrapper">
+            <h1>Наша команда</h1>
+            <div id="grid">
+                <div id="people">
+                    <img src="assets/people.jpg" alt="Человек">
+                    <h5>Максим Золотарев</h5>
+                    <h6>Администратор</h5>
+                </div>
+                <div id="people">
+                    <img src="assets/people.jpg" alt="Человек">
+                    <h5>Максим Золотарев</h5>
+                    <h6>Администратор</h5>
+                </div>
+                <div id="people">
+                    <img src="assets/people.jpg" alt="Человек">
+                    <h5>Максим Золотарев</h5>
+                    <h6>Администратор</h5>
+                </div>
+                <div id="people">
+                    <img src="assets/people.jpg" alt="Человек">
+                    <h5>Максим Золотарев</h5>
+                    <h6>Администратор</h5>
+                </div>
+                <div id="people">
+                    <img src="assets/people.jpg" alt="Человек">
+                    <h5>Максим Золотарев</h5>
+                    <h6>Администратор</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="decoration"></div>
+        
+    </main>
+
+    <div class="faq-section">
+        <h2>Частые вопросы</h2>
+        
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>Как оформить заказ?</h3>
+            <button class="faq-toggle">+</button>
+          </div>
+          <div class="faq-answer">
+            <p>Выберите товар, добавьте его в корзину и перейдите к оформлению заказа. Заполните необходимые данные и подтвердите заказ.</p>
+          </div>
+        </div>
+      
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>Какие способы оплаты доступны?</h3>
+            <button class="faq-toggle">+</button>
+          </div>
+          <div class="faq-answer">
+            <p>Мы принимаем оплату банковскими картами, электронными деньгами и наличными при получении.</p>
+          </div>
+        </div>
+      
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>Как узнать статус моего заказа?</h3>
+            <button class="faq-toggle">+</button>
+          </div>
+          <div class="faq-answer">
+            <p>Статус заказа можно отслеживать в личном кабинете или по номеру заказа в разделе "Отслеживание".</p>
+          </div>
+        </div>
+      </div>
+
+      <main id="contacts">
+        <div id="wrapper">
+            <div id="numbers">
+                <h3>Контакты</h3>
+                <br>
+                <h3>Главный офис</h3>
+                <h4>+7 800 789 89 89</h4>
+                <h4>г. Санкт-Петербург, Комсомольская, 43 к1</h4>
+                <br>
+                <img src="assets/VK.svg" alt="">    
+                <img src="assets/VK.svg" alt="">
+            </div>
+
+            <div id="map"></div>
+        </div>
+      </main>
+
+
+      <script type="text/javascript" src="script.js"></script> 
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>
