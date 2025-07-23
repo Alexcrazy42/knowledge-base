@@ -98,3 +98,7 @@ mock.Setup(x => x.GetData()).Returns("Hello");
 разбор выражения: Moq анализирует x => x.GetData() как Expression<Func<IService, string>>
 создание конфигурации: запоминает, что при вызове GetData нужно вернуть "hello"
 генерация прокси: DynamicProxy создает класс-заглушку
+
+
+
+

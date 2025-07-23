@@ -2,4 +2,5 @@
 
 //CommonClient.UseAbstractFactory();
 //CommonClient.UseBuilder();
-CommonClient.UseFactoryMethod();
+//CommonClient.UseFactoryMethod();
+CommonClient.UseSingleton();

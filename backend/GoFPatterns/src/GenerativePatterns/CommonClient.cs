@@ -2,6 +2,7 @@
 using Self.Patterns.GenerativePatterns.Builder;
 using Self.Patterns.GenerativePatterns.FactoryMethod;
 using Self.Patterns.GenerativePatterns.Prototype;
+using Self.Patterns.GenerativePatterns.Singleton;
 
 namespace Self.Patterns.GenerativePatterns;
 
@@ -62,4 +63,12 @@ public class CommonClient
         editor.CreateAndPlayNote(); // Играем Целая нота (4000 мс)
     }
 
+
+    public static void UseSingleton()
+    {
+        var singleton = SingletonImpl.GetInstance();
+        singleton = SingletonImpl.GetInstance();
+        singleton = SingletonImpl.GetInstance();
+        singleton.Log("Hello World");
+    }
 }
