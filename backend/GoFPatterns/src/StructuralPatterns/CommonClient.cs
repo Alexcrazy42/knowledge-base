@@ -2,6 +2,8 @@
 using Self.Patterns.StructuralPatterns.Bridge;
 using Self.Patterns.StructuralPatterns.Composite;
 using Self.Patterns.StructuralPatterns.Decorator;
+using Self.Patterns.StructuralPatterns.Flyweight;
+using Self.Patterns.StructuralPatterns.Proxy;
 using File = System.IO.File;
 
 namespace Self.Patterns.StructuralPatterns;
@@ -52,5 +54,49 @@ public class CommonClient
         coffee = new SugarDecorator(new MilkDecorator(coffee));
 
         Console.WriteLine($"{coffee.GetDescription()} = ${coffee.GetCost()}");
+    }
+
+    public static void UseFlyweight()
+    {
+        var factory = new GlyphFactory();
+        var context = new GlyphContext { Font = "Arial", X = 0, Y = 0, Width = 10 };
+
+        var row = new Row();
+        row.Add(factory.GetCharacter('H'));
+        row.Add(factory.GetCharacter('e'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('o'));
+        row.Add(factory.GetCharacter('H'));
+        row.Add(factory.GetCharacter('e'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('o'));
+        row.Add(factory.GetCharacter('H'));
+        row.Add(factory.GetCharacter('e'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('o'));
+        row.Add(factory.GetCharacter('H'));
+        row.Add(factory.GetCharacter('e'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('l'));
+        row.Add(factory.GetCharacter('o'));
+
+        row.Draw(context);
+    }
+
+    public static void UseProxy()
+    {
+        IGraphic image = new ImageProxy("photo.jpg");
+
+        // Изображение ещё не загружено
+        Console.WriteLine($"Размер: {image.Width}x{image.Height}");
+
+        // Первый вызов Draw() загружает изображение
+        image.Draw();
+
+        // Повторный вызов использует уже загруженный объект
+        image.Draw();
     }
 }

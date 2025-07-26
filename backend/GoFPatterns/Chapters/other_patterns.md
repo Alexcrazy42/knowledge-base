@@ -2,7 +2,7 @@
 
 1. Fluent Interface (метод цепочки)
 
-2удобное использование Action
+2. удобное использование Action
 ```csharp
 services.AddHttpClient("GitHubClient", client =>
 {

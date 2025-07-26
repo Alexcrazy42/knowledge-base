@@ -3,4 +3,6 @@
 //CommonClient.UseAdapter();
 //CommonClient.UseBridge();
 //CommonClient.UseComposite();
-CommonClient.UseDecorator();
+//CommonClient.UseDecorator();
+//CommonClient.UseFlyweight();
+CommonClient.UseProxy();
