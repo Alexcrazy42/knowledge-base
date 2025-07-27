@@ -1,3 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Self.Patterns.BehaviorPatterns;
 
-Console.WriteLine("Hello, World!");
+//CommonClient.UseChainOfResponsibility();
+CommonClient.UseCommand();
