@@ -4,4 +4,11 @@
 //CommonClient.UseCommand();
 //CommonClient.UseInterpreterSql();
 //CommonClient.UseInterpreterMath();
-CommonClient.UseIterator();
+//CommonClient.UseIterator();
+//CommonClient.UseMediator();
+//CommonClient.UseMemento();
+//CommonClient.UseObserver();
+//CommonClient.UseState();
+//CommonClient.UseStrategy();
+//CommonClient.UseTemplateMethod();
+CommonClient.UseVisitor();
