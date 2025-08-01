@@ -73,13 +73,20 @@ npm install tslint --save-dev
 
 [TypeScript + EsLint] https://typescript-eslint.io/
 npm install eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin --save-dev
-
+и 
 создание файла tslint.json
 
 # Инициализация конфига
 npx tslint --init
 ```
 
+### Опции tsconfig.json
 
-29 на моменте Кратко пройдемся по значениям некоторых из перечисленных опций
-(табл. 2.2).
+include: в каких каталогах TSC должен искать файлы TypeScript
+lib: наличие каких API в вашей среде разработки должен предполагать TSC? это касается также таких элементов как Function.prototype.bind в ES5, Object.assign в document.DOM.querySelector?
+module: в какую модульную систему должен производить компиляцию TSC (CommonJs, SystemJs, ES2015 и пр)?
+outDir: в какой каталог TSC должен помещать сгенерированный JavaScript код?
+strict: как производить максимально строгую проверку кода и соблюдать правильную типизацию? мы будем испльзовать ее во всех примерах
+target: в какую версию Js нужно компилировать код (ES3, ES5, ES2015 и тд)
+
+## tslint.json, .eslintrc.js
