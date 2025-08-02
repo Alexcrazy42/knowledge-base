@@ -18,3 +18,5 @@ https://www.npmjs.com/package/tslint-react).
 одной команды.
 y Используйте инструмент автоматической генерации typescript-nodestarter (https://github.com/Microsoft/TypeScript-Node-Starter) для быстрого
 создания структуры каталога.
+
+6. Чтобы глубоко вникнуть в теорию this, прочтите серию книг «Вы не знаете JS» Кайла Симпсона (СПб.: Питер, 2019).

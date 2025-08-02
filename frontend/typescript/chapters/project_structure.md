@@ -1,6 +1,11 @@
 ﻿# tsconfig.json
-noImplicitAny -> автоматом при tsconfig.json
+noImplicitAny -> автоматом при strict
 "preserveConstEnums": true
+TSC-ФЛАГ: STRICTBINDCALLAPPLY
+TSLint no-invalid-this
+TSC-ФЛАГ: NOIMPLICITTHIS
+TSC-ФЛАГ: DOWNLEVELITERATION
+TSC-ФЛАГИ: STRICTNULLCHECKS И STRICTPROPERTYINITIALIZATION -> автоматом при strict
 
 # tsconfig.json
 
