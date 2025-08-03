@@ -2,7 +2,7 @@
 
 2. keyof, typeof, instanceof, in, as, is, extends, infer, 
 
-2. в этом разобраться:
+3. в этом разобраться:
 ```
 function logMethod(target: any, key: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
@@ -22,5 +22,10 @@ class Calculator {
 ```
 
 
-Номинальная и структурная типизации
+4. Номинальная и структурная типизации
 
+5. 228 - 244 глава про асинхронность.
+
+6. SharedArrayBuffer, Atomics; Mutex из async-mutex или workerpoll, хотя под капотом Atomics (ES2017) при использовании Web Workers или Worker Threads
+
+7. Модели, пространства имен

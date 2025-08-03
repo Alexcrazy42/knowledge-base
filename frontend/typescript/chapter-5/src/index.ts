@@ -155,7 +155,7 @@ class ImmutableClass {
     }
 }
 
-class Child extends ImmutableClass {} 
+class Child extends ImmutableClass {}
 
 type Person = {
   name: string;
@@ -185,4 +185,47 @@ const getters = createGetters(person);
 
 console.log(getters.getName()); // "Alice"
 console.log(getters.getAge());  // 30
-console.log(getters instanceof Person);
+console.log(getters instanceof ImmutableClass)
+
+
+class InvalidDateFormatError extends RangeError {}
+class DateIsInTheFutureError extends RangeError {}
+
+function isValid(date: Date) {
+ return Object.prototype.toString.call(date) === '[object Date]'
+ && !Number.isNaN(date.getTime())
+}
+
+function parse(
+ birthday: string
+): Date | InvalidDateFormatError | DateIsInTheFutureError {
+ let date = new Date(birthday)
+ if (!isValid(date)) {
+ return new InvalidDateFormatError('Enter a date in the form YYYY/MM/DD')
+ }
+ if (date.getTime() > Date.now()) {
+ return new DateIsInTheFutureError('Are you a timelord?')
+ }
+ return date
+}
+let result = parse('2025/07/05');
+if(result instanceof InvalidDateFormatError) {
+  console.error(result.message);
+} else if (result instanceof DateIsInTheFutureError) {
+  console.error(result.message);
+} else {
+  console.log('date is', result.toISOString());
+}
+
+// A и B никогад не будут выполнены, тк в Call Stack бесконечно будут попадать синхронные задачки из бесконечного цикла
+// setTimeout(() => console.info('A'), 1000)
+// setTimeout(() => console.info('B'), 2000)
+// console.info('C')
+// while (true) {}
+
+console.log('Start');
+
+setTimeout(() => console.log('Timeout 1'), 0); // макрозадача
+Promise.resolve().then(() => console.log('Promise 1')); // микрозадача
+
+console.log('End');

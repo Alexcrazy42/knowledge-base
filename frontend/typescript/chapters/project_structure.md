@@ -7,7 +7,10 @@ TSC-ФЛАГ: NOIMPLICITTHIS
 TSC-ФЛАГ: DOWNLEVELITERATION
 TSC-ФЛАГИ: STRICTNULLCHECKS И STRICTPROPERTYINITIALIZATION -> автоматом при strict
 
-# tsconfig.json
+// @ts-ignore
+
+// types.d.ts
+declare module 'nearby-ferret-alerter'
 
 # .eslintrc.js
 
