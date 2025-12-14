@@ -52,6 +52,7 @@ public class CommonClient
         Console.WriteLine($"{coffee.GetDescription()} = ${coffee.GetCost()}");
 
         coffee = new SugarDecorator(new MilkDecorator(coffee));
+        coffee = new MilkDecorator(coffee);
 
         Console.WriteLine($"{coffee.GetDescription()} = ${coffee.GetCost()}");
     }

@@ -12,7 +12,7 @@ public class Context
     // Свойство для изменения состояния
     public IState State
     {
-        get { return state; }
+        get => state;
         set
         {
             state = value;
