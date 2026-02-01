@@ -1,3 +1,0 @@
-﻿﻿# Common.Kafka
-
-Producers, Consumers
