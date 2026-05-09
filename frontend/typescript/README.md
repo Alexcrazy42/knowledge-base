@@ -1,6 +1,6 @@
 ﻿1. Главу 6 с продвинутыми типами возможно потом следует перечитать, когда станет больше понимания в JS/TS
 
-2. keyof, typeof, instanceof, in, as, is, extends, infer, 
+2. keyof, typeof, instanceof, in, as, is, extends, infer
 
 3. в этом разобраться:
 ```

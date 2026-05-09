@@ -1,0 +1,133 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  
+  // https://aka.ms/tsconfig — официальная документация TSConfig
+  // https://aka.ms/tsconfig/module — документация по модулям
+  
+  "compilerOptions": {
+    // ===== File Layout =====
+    
+    // rootDir: Исходная директория с исходным кодом. TS ищет файлы здесь рекурсивно
+    "rootDir": "./src",
+    
+    // outDir: Директория для скомпилированных JS файлов. Структура копируется из rootDir
+    "outDir": "./dist",
+    
+    // ===== Environment Settings =====
+    
+    // module: Система модулей для вывода (ESNext=современный ESM, NodeNext=совместим с Node.js)
+    "module": "nodenext",
+    
+    // target: Целевая версия JS (esnext=самая новая, без транспиляции)
+    "target": "esnext",
+    
+    // types: Только эти @types/* пакеты загружать (пустой=[] игнорирует все)
+    "types": [],
+    
+    // lib: Библиотеки типов (DOM, ESNext). Закомментировано для Node.js
+    // "lib": ["esnext"],
+    
+    // types: Автозагрузка типов Node.js. Требует npm i -D @types/node
+    // "types": ["node"],
+    
+    // ===== Other Outputs =====
+    
+    // sourceMap: Генерирует .js.map для отладки (source maps)
+    "sourceMap": true,
+    
+    // declaration: Создаёт .d.ts файлы деклараций типов для библиотек
+    "declaration": true,
+    
+    // declarationMap: Source maps для .d.ts файлов (удобно в IDE)
+    "declarationMap": true,
+    
+    // ===== Stricter Typechecking Options =====
+    
+    // noUncheckedIndexedAccess: true=массивы/объекты требуют проверки (a[0] → a[0]!)
+    "noUncheckedIndexedAccess": true,
+    
+    // exactOptionalPropertyTypes: Строгие опциональные свойства (foo?: string → foo: string | undefined)
+    "exactOptionalPropertyTypes": true,
+    
+    // ===== Style Options (рекомендуемые, но отключены) =====
+    
+    // noImplicitReturns: true=все пути в функции должны явно return
+    // "noImplicitReturns": true,
+    
+    // noImplicitOverride: true=явное override в extends (class Child extends Parent)
+    // "noImplicitOverride": true,
+    
+    // noUnusedLocals: true=ошибка на неиспользуемые локальные переменные
+    // "noUnusedLocals": true,
+    
+    // noUnusedParameters: true=ошибка на неиспользуемые параметры функций
+    // "noUnusedParameters": true,
+    
+    // noFallthroughCasesInSwitch: true=предупреждение при fallthrough в switch
+    // "noFallthroughCasesInSwitch": true,
+    
+    // noPropertyAccessFromIndexSignature: true=строгий доступ к индексным сигнатурам
+    // "noPropertyAccessFromIndexSignature": true,
+    
+    // ===== Recommended Options =====
+    
+    // strict: Включает ВСЕ строгие проверки типов разом (strictNullChecks + ...)
+    "strict": true,
+    
+    // jsx: Настройки JSX (react-jsx=современный React 17+ без React.implicitCreateElement)
+    "jsx": "react-jsx",
+    
+    // verbatimModuleSyntax: Строгий ESM-синтаксис (запрещает __importStar и т.п.)
+    "verbatimModuleSyntax": false,
+    
+    // isolatedModules: Каждый файл — отдельный модуль (для esbuild/tsc --isolatedModules)
+    "isolatedModules": true,
+    
+    // noUncheckedSideEffectImports: Предупреждения о side-effects в импортах
+    "noUncheckedSideEffectImports": true,
+    
+    // moduleDetection: "force"=все импорты как ESM (строго)
+    "moduleDetection": "force",
+    
+    // skipLibCheck: Пропускать type-check .d.ts файлов (ускоряет компиляцию)
+    "skipLibCheck": true,
+    
+    // ===== ДОПОЛНИТЕЛЬНЫЕ РЕКОМЕНДУЕМЫЕ ОПЦИИ ДЛЯ ИЗУЧЕНИЯ =====
+    
+    // allowJs: Компилировать .js файлы вместе с .ts
+    // "allowJs": true,
+    
+    // checkJs: Проверять типы в .js файлах (// @ts-check)
+    // "checkJs": true,
+    
+    // esModuleInterop: Совместимость CommonJS/ESM (import * as fs from 'fs')
+    // "esModuleInterop": true,
+    
+    // forceConsistentCasingInFileNames: Ошибка на нечувствительность к регистру (Windows/Linux)
+    // "forceConsistentCasingInFileNames": true,
+    
+    // importHelpers: Импорт общих утилит (_tslib вместо дублирования)
+    // "importHelpers": true,
+    
+    // moduleResolution: Стратегия поиска модулей (node=node_modules, bundler=современные)
+    // "moduleResolution": "node",
+    
+    // noEmit: Не генерировать JS/.d.ts (только type-check)
+    // "noEmit": true,
+    
+    // noImplicitAny: Ошибка на неявный any (строгие типы)
+    // "noImplicitAny": true,
+    
+    // noImplicitThis: Ошибка на неявный this=any
+    // "noImplicitThis": true,
+    
+    // preserveSymlinks: Поддержка симлинков в node_modules
+    // "preserveSymlinks": true,
+    
+    // resolveJsonModule: Импорт JSON как модули (import data from './data.json')
+    // "resolveJsonModule": true,
+    
+    // strictNullChecks: null/undefined не совместимы с типами
+    // "strictNullChecks": true,
+  }
+}
