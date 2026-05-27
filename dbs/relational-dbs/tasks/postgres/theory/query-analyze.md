@@ -1,5 +1,4 @@
-﻿
-# EXPLAIN ANALYZE в PostgreSQL: Полное руководство
+﻿# EXPLAIN ANALYZE в PostgreSQL: Полное руководство
 
 ## Введение
 
