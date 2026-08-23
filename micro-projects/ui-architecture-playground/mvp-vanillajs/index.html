@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Канбан — Vanilla JS MVP (Model-View-Presenter)</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!--
+    Статический скелет главного экрана. Динамику (колонки, карточки,
+    списки) рисуют ВЬЮХИ; этот HTML - только "раскадровка" контролов.
+
+    Скрипты подключаются БЕЗ type="module" - классические скрипты работают
+    и с file:// (двойной клик по index.html), и с любым статическим сервером.
+    Порядок важен: модели -> стор -> вьюхи/модалки -> презентеры -> корень.
+-->
+
+<div id="app" class="app">
+    <!-- ===== шапка ===== -->
+    <header class="toolbar">
+        <label>Доска:</label>
+        <select id="boards-select"></select>
+        <button id="btn-new-board">+ Доска</button>
+        <button id="btn-rename-board">Переименовать</button>
+        <button id="btn-delete-board">Удалить</button>
+
+        <span class="spacer"></span>
+        <button id="btn-users">Пользователи</button>
+
+        <span class="spacer"></span>
+        <button id="btn-seed-epic">+ Тестовый эпик</button>
+        <button id="btn-seed-tasks">+10 задач</button>
+        <button id="btn-export">Экспорт</button>
+        <button id="btn-import">Импорт</button>
+        <input type="file" id="file-import" accept=".json" class="hidden">
+        <button id="btn-reset-all" class="danger">Сброс всего…</button>
+    </header>
+
+    <!-- ===== фильтры ===== -->
+    <section class="toolbar filters">
+        <label>Исполнитель:</label>
+        <select id="filter-assignee"></select>
+        <label>Эпик:</label>
+        <select id="filter-epic"></select>
+        <label>Сортировка:</label>
+        <select id="sort-mode">
+            <option value="order">По порядку</option>
+            <option value="priority">По приоритету</option>
+        </select>
+        <input type="search" id="search" placeholder="Поиск по задачам…">
+        <button id="btn-apply" class="primary">Применить</button>
+        <button id="btn-reset-filters">Сбросить фильтры</button>
+    </section>
+
+    <!-- ===== переключатель вида ===== -->
+    <nav class="tabs">
+        <button id="tab-board" class="active">Доска</button>
+        <button id="tab-list">Список</button>
+    </nav>
+
+    <!-- ===== канбан + сайдбар эпиков ===== -->
+    <main id="kanban-section" class="board-layout">
+        <div id="kanban-columns" class="columns"><!-- колонки рисует BoardView --></div>
+
+        <aside class="epics">
+            <h2>Эпики</h2>
+            <ul id="epics-list"></ul>
+            <button id="btn-add-epic">+ Создать эпик</button>
+            <button id="btn-delete-epic" disabled>Удалить выбранный</button>
+        </aside>
+    </main>
+
+    <!-- ===== табличный вид ===== -->
+    <main id="table-section" class="hidden">
+        <table id="tasks-table">
+            <thead>
+                <tr><th>Ключ</th><th>Заголовок</th><th>Статус</th>
+                    <th>Приоритет</th><th>Исполнитель</th><th>Дедлайн</th></tr>
+            </thead>
+            <tbody><!-- строки рисует BoardView --></tbody>
+        </table>
+    </main>
+
+    <!-- ===== строка статуса ===== -->
+    <footer class="statusbar"><span id="flash">Готово</span></footer>
+</div>
+
+<!-- ===== экран пользователей (аналог модального окна UsersForm) ===== -->
+<div id="users-screen" class="users-screen hidden"></div>
+
+<script src="js/domain/models.js"></script>
+<script src="js/domain/store.js"></script>
+<script src="js/views/modals.js"></script>
+<script src="js/views/board-view.js"></script>
+<script src="js/views/users-view.js"></script>
+<script src="js/presenters/board-presenter.js"></script>
+<script src="js/presenters/users-presenter.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

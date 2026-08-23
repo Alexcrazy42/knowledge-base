@@ -1,0 +1,379 @@
+@* ============================================================================
+    Board/Index - главная страница канбана (аналог Pages/Index.cshtml из
+    PageController-проекта). Сравнивайте файлы бок о бок:
+
+      Razor Pages                          MVC
+      --------------------------------------------------------------------
+      @model IndexModel                    @model BoardPageVm
+      asp-page-handler="DeleteTask"        asp-controller="Tasks" asp-action="Delete"
+      Link(("view","list"))                BoardUrls.Build(Model, ("view","list"))
+      Model.UserOf(...)                    Model.UserOf(...)  (метод самой VM)
+
+    Логики в разметке по-прежнему нет: только данные VM и формы.
+   ============================================================================ *@
+@model BoardPageVm
+@{
+    ViewData["Title"] = "Канбан";
+    // returnUrl для POST-форм: после мутации вернёмся на тот же экран с фильтрами.
+    // Контекст запроса доступен из свойства Context (HttpContext).
+    // Вариант БЕЗ диалоговых ключей: если форма открыта через ?task=/?edit=/?dlg=,
+    // после мутации диалог не должен открываться повторно.
+    // ВАЖНО: NameValueCollection не умеет неявно вставлять "?" - делаем это сами.
+    var cleanQs = System.Web.HttpUtility.ParseQueryString(Context.Request.QueryString.Value ?? "");
+    foreach (var k in new[] { "task", "edit", "dlg", "delepic", "state" }) { cleanQs.Remove(k); }
+    var returnUrlNoDialog = Context.Request.Path + (cleanQs.Count > 0 ? "?" + cleanQs : "");
+}
+
+<div class="app" data-move-url="/Tasks/Move" data-board-id="@Model.BoardId">
+
+<header class="topbar">
+    <a class="brand" href="@BoardUrls.Build(Model, ("view", "board"))">Kanban <small>MVC</small></a>
+
+    @if (Model.CurrentBoard is null)
+    {
+        <span class="muted">досок нет</span>
+        <button class="btn" data-dialog="dlg-new-board">Создать доску</button>
+    }
+    else
+    {
+        <form method="get" asp-controller="Board" asp-action="Index" class="inline">
+            <select name="board" onchange="this.form.submit()" title="Переключить доску">
+                @foreach (var b in Model.AllBoards)
+                {
+                    <option value="@b.Id" selected="@(b.Id == Model.BoardId)">@b.Name</option>
+                }
+            </select>
+            <input type="hidden" name="view" value="@Model.ViewMode"/>
+        </form>
+
+        <span class="spacer"></span>
+
+        <button class="btn" data-dialog="dlg-new-board">+ Доска</button>
+        <button class="btn" data-dialog="dlg-rename-board">Переименовать</button>
+        <form method="post" asp-controller="Board" asp-action="DeleteBoard" class="inline"
+              data-confirm='Удалить доску "@Model.CurrentBoard.Name" вместе с задачами?'>
+            <input type="hidden" name="boardId" value="@Model.BoardId"/>
+            <button class="btn danger">Удалить доску</button>
+        </form>
+
+        <nav class="tabs">
+            <a href="@BoardUrls.Build(Model, ("view", "board"))" class="@(Model.ViewMode == "board" ? "active" : "")">Доска</a>
+            <a href="@BoardUrls.Build(Model, ("view", "list"))" class="@(Model.ViewMode == "list" ? "active" : "")">Список</a>
+        </nav>
+
+        <span class="spacer"></span>
+
+        <a class="btn" asp-controller="Users" asp-action="Index">Пользователи (@Model.Users.Count)</a>
+
+        @* Кнопки сидов постят в ДРУГОЙ контроллер (Data) - норма для MVC *@
+        <form method="post" asp-controller="Data" asp-action="SeedEpic" class="inline">
+            <input type="hidden" name="boardId" value="@Model.BoardId"/>
+            <input type="hidden" name="returnUrl" value="@returnUrlNoDialog"/>
+            <button class="btn">+ Тестовый эпик</button>
+        </form>
+        <form method="post" asp-controller="Data" asp-action="SeedTasks" class="inline">
+            <input type="hidden" name="boardId" value="@Model.BoardId"/>
+            <input type="hidden" name="count" value="10"/>
+            <input type="hidden" name="returnUrl" value="@returnUrlNoDialog"/>
+            <button class="btn">+10 задач</button>
+        </form>
+
+        <a class="btn" asp-controller="Data" asp-action="Export">Экспорт JSON</a>
+        <form method="post" asp-controller="Data" asp-action="Import" enctype="multipart/form-data" class="inline">
+            <label class="btn file-btn">
+                Импорт JSON<input type="file" name="file" accept=".json" onchange="this.form.submit()"/>
+            </label>
+        </form>
+        <button class="btn danger" data-dialog="dlg-reset">Сброс</button>
+    }
+</header>
+
+@if (Model.CurrentBoard is null)
+{
+    <section class="hero">
+        <h1>Нет ни одной доски</h1>
+        <p>Создайте первую доску — появятся колонки To Do / In Progress / Done.</p>
+        <button class="btn primary big" data-dialog="dlg-new-board">Создать доску</button>
+    </section>
+}
+else
+{
+    <form method="get" asp-controller="Board" asp-action="Index" class="filters">
+        <input type="hidden" name="board" value="@Model.BoardId"/>
+        <input type="hidden" name="view" value="@Model.ViewMode"/>
+
+        <select name="assignee" title="Фильтр по исполнителю">
+            <option value="">Все исполнители</option>
+            <option value="none" selected="@(Model.AssigneeId == "none")">Без исполнителя</option>
+            @foreach (var u in Model.Users)
+            {
+                <option value="@u.Id" selected="@(Model.AssigneeId == u.Id.ToString())">@u.Name</option>
+            }
+        </select>
+
+        <select name="epic" title="Фильтр по эпику">
+            <option value="">Все эпики</option>
+            <option value="none" selected="@(Model.EpicId == "none")">Без эпика</option>
+            @foreach (var stat in Model.EpicStats)
+            {
+                var percent = stat.Total == 0 ? 0 : stat.Done * 100 / stat.Total;
+                <option value="@stat.Epic.Id" selected="@(Model.EpicId == stat.Epic.Id.ToString())">
+                    EPIC-@stat.Epic.Number · @stat.Epic.Title (@stat.Done/@stat.Total — @percent%)
+                </option>
+            }
+        </select>
+
+        <select name="sort" title="Сортировка">
+            <option value="order" selected="@(Model.Sort != "priority")">По порядку</option>
+            <option value="priority" selected="@(Model.Sort == "priority")">По приоритету</option>
+        </select>
+
+        <input type="search" name="q" value="@Model.Q" placeholder="Поиск по задачам…"/>
+        <button class="btn">Применить</button>
+        <a class="btn ghost" asp-controller="Board" asp-action="Index"
+           asp-route-board="@Model.BoardId" asp-route-view="@Model.ViewMode">Сбросить фильтры</a>
+    </form>
+
+    <div class="layout">
+        <main>
+            @if (Model.ViewMode == "board")
+            {
+                <div class="kanban">
+                    @foreach (var state in Enum.GetValues<TaskState>())
+                    {
+                        // Формируем карточки-VM заранее: партиал получает готовые данные
+                        var columnCards = Model.VisibleTasks.Where(t => t.State == state)
+                            .Select(t => new TaskCardVm(
+                                t,
+                                Model.UserOf(t.AssigneeId),
+                                Model.EpicOf(t.EpicId),
+                                BoardUrls.Build(Model, ("task", $"TASK-{t.Number}"))))
+                            .ToList();
+                        <div class="column" data-column="@state">
+                            <div class="column-header">
+                                @state.ToDisplay() <span class="count">@columnCards.Count</span>
+                                <a class="add-card" href="@BoardUrls.Build(Model, ("dlg", "newtask"), ("state", state.ToString()))">+</a>
+                            </div>
+                            <div class="column-body">
+                                @foreach (var card in columnCards)
+                                {
+                                    <partial name="_TaskCard" model="card"/>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <table class="task-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th><th>Заголовок</th><th>Статус</th><th>Исполнитель</th>
+                        <th>Приоритет</th><th>Дедлайн</th><th>Эпик</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var t in Model.VisibleTasks)
+                    {
+                        var assignee = Model.UserOf(t.AssigneeId);
+                        var epic = Model.EpicOf(t.EpicId);
+                        var detailsUrl = BoardUrls.Build(Model, ("task", $"TASK-{t.Number}"));
+                        <tr>
+                            <td><a class="key" href="@detailsUrl">TASK-@t.Number</a></td>
+                            <td><a href="@detailsUrl">@t.Title</a></td>
+                            <td><span class="badge st-@t.State">@t.State.ToDisplay()</span></td>
+                            <td>
+                                @if (assignee is not null)
+                                {
+                                    <span class="avatar" style="background:@assignee.Color">@assignee.Name[..1]</span>
+                                    @assignee.Name
+                                }
+                                else
+                                {
+                                    <span class="muted">—</span>
+                                }
+                            </td>
+                            <td><span class="badge prio-@t.PriorityLevel">@t.PriorityLevel.ToDisplay()</span></td>
+                            <td>@(t.Deadline?.ToString("dd.MM.yyyy") ?? "—")</td>
+                            <td>@(epic is null ? "" : $"EPIC-{epic.Number}")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+                @if (Model.VisibleTasks.Count == 0)
+                {
+                    <p class="muted center">Задач не найдено.</p>
+                }
+            }
+        </main>
+
+        <aside class="epics">
+            <h3>Эпики</h3>
+            <button class="btn wide" data-dialog="dlg-new-epic">+ Создать эпик</button>
+            @foreach (var stat in Model.EpicStats)
+            {
+                var percent = stat.Total == 0 ? 0 : stat.Done * 100 / stat.Total;
+                <div class="epic">
+                    <div class="epic-title">
+                        EPIC-@stat.Epic.Number · @stat.Epic.Title
+                        <a class="icon-link danger" title="Удалить эпик"
+                           href="@BoardUrls.Build(Model, ("delepic", $"EPIC-{stat.Epic.Number}"))">×</a>
+                    </div>
+                    @if (!string.IsNullOrEmpty(stat.Epic.Description))
+                    {
+                        <div class="muted small">@stat.Epic.Description</div>
+                    }
+                    <div class="progress"><div style="width:@(percent)%"></div></div>
+                    <div class="small">@stat.Done/@stat.Total (@percent%)</div>
+                </div>
+            }
+            @if (Model.EpicStats.Count == 0)
+            {
+                <p class="muted small">Эпиков пока нет.</p>
+            }
+        </aside>
+    </div>
+}
+
+@* ==================== ДИАЛОГИ ==================== *@
+@* Серверные: рендерятся с open, когда соответствующий параметр в URL *@
+
+@* Диалог "новая доска" нужен ВСЕГДА (и на пустом экране тоже) *@
+<dialog id="dlg-new-board" class="dialog">
+    <form method="post" asp-controller="Board" asp-action="CreateBoard">
+        <header><strong>Новая доска</strong></header>
+        <input name="name" placeholder="Название, например Sprint 2025-03" required/>
+        <footer>
+            <button class="btn primary">Сохранить</button>
+            <button type="button" class="btn ghost" data-close>Отмена</button>
+        </footer>
+    </form>
+</dialog>
+
+@if (Model.DetailTask is { } dt)
+    {
+        var assignee = Model.UserOf(dt.AssigneeId);
+        var epic = Model.EpicOf(dt.EpicId);
+        <dialog open class="dialog">
+            <header>
+                <strong>TASK-@dt.Number</strong>
+                <span class="badge st-@dt.State">@dt.State.ToDisplay()</span>
+                <span class="badge prio-@dt.PriorityLevel">@dt.PriorityLevel.ToDisplay()</span>
+                <span class="badge">@dt.Type.ToDisplay()</span>
+                <a class="dialog-close" href="@BoardUrls.Build(Model, ("task", null))">×</a>
+            </header>
+            <h2>@dt.Title</h2>
+            <p class="prewrap">@(string.IsNullOrEmpty(dt.Description) ? "— без описания —" : dt.Description)</p>
+            <dl class="details">
+                <dt>Исполнитель</dt><dd>
+                    @if (assignee is not null)
+                    {
+                        <span class="avatar" style="background:@assignee.Color">@assignee.Name[..1]</span> @assignee.Name
+                    }
+                    else { <span class="muted">не назначен</span> }
+                </dd>
+                <dt>Дедлайн</dt><dd>@(dt.Deadline?.ToString("dd.MM.yyyy") ?? "—")</dd>
+                <dt>Эпик</dt><dd>@(epic is null ? "—" : $"EPIC-{epic.Number} · {epic.Title}")</dd>
+                <dt>Создана</dt><dd>@dt.CreatedAt.ToString("g")</dd>
+                <dt>Обновлена</dt><dd>@dt.UpdatedAt.ToString("g")</dd>
+            </dl>
+            <footer>
+                <a class="btn" href="@BoardUrls.Build(Model, ("edit", $"TASK-{dt.Number}"), ("task", null))">Редактировать</a>
+                <form method="post" asp-controller="Tasks" asp-action="Delete" class="inline"
+                      data-confirm="Удалить задачу TASK-@dt.Number?">
+                    <input type="hidden" name="boardId" value="@Model.BoardId"/>
+                    <input type="hidden" name="taskId" value="@dt.Id"/>
+                    <input type="hidden" name="returnUrl" value="@returnUrlNoDialog"/>
+                    <button class="btn danger">Удалить</button>
+                </form>
+                <a class="btn ghost" href="@BoardUrls.Build(Model, ("task", null))">Закрыть</a>
+            </footer>
+        </dialog>
+    }
+
+    @if (Model.EditTask is { } et)
+    {
+        <dialog open class="dialog">
+            <header><strong>Редактирование TASK-@et.Number</strong>
+                <a class="dialog-close" href="@BoardUrls.Build(Model, ("edit", null))">×</a>
+            </header>
+            <partial name="_TaskForm" model="new TaskFormVm(Model.BoardId!.Value, et, et.State, Model.Users, Model.CurrentBoard!.Epics)"/>
+        </dialog>
+    }
+
+    @if (Model.ShowNewTaskDialog)
+    {
+        <dialog id="dlg-new-task" open class="dialog">
+            <header><strong>Новая задача</strong>
+                <a class="dialog-close" href="@BoardUrls.Build(Model, ("dlg", null))">×</a>
+            </header>
+            <partial name="_TaskForm" model="new TaskFormVm(Model.BoardId!.Value, null, Model.NewTaskState, Model.Users, Model.CurrentBoard!.Epics)"/>
+        </dialog>
+    }
+
+    @if (Model.DeleteEpicTarget is { } delEpic)
+    {
+        <dialog open class="dialog">
+            <header><strong>Удалить EPIC-@delEpic.Number?</strong>
+                <a class="dialog-close" href="@BoardUrls.Build(Model, ("delepic", null))">×</a>
+            </header>
+            <form method="post" asp-controller="Epics" asp-action="Delete">
+                <input type="hidden" name="boardId" value="@Model.BoardId"/>
+                <input type="hidden" name="epicId" value="@delEpic.Id"/>
+                <input type="hidden" name="returnUrl" value="@returnUrlNoDialog"/>
+                <p>Что сделать с привязанными задачами?</p>
+                <label><input type="radio" name="mode" value="DetachTasks" checked/> Отвязать задачи от эпика</label>
+                <label><input type="radio" name="mode" value="CascadeDeleteTasks"/> Удалить все задачи эпика</label>
+                <footer>
+                    <button class="btn danger">Удалить эпик</button>
+                    <a class="btn ghost" href="@BoardUrls.Build(Model, ("delepic", null))">Отмена</a>
+                </footer>
+            </form>
+        </dialog>
+    }
+
+    @* JS-диалоги: открываются кнопками data-dialog без похода на сервер *@
+
+    @* Переименование доступно только когда доска есть (разыменовываем CurrentBoard) *@
+    @if (Model.CurrentBoard is not null)
+    {
+        <dialog id="dlg-rename-board" class="dialog">
+            <form method="post" asp-controller="Board" asp-action="RenameBoard">
+                <header><strong>Переименовать доску</strong></header>
+                <input type="hidden" name="boardId" value="@Model.BoardId"/>
+                <input name="name" value="@Model.CurrentBoard.Name" required/>
+                <footer>
+                    <button class="btn primary">Сохранить</button>
+                    <button type="button" class="btn ghost" data-close>Отмена</button>
+                </footer>
+            </form>
+        </dialog>
+    }
+
+    <dialog id="dlg-new-epic" class="dialog">
+        <form method="post" asp-controller="Epics" asp-action="Create">
+            <header><strong>Новый эпик</strong></header>
+            <input type="hidden" name="boardId" value="@Model.BoardId"/>
+            <input type="hidden" name="returnUrl" value="@returnUrlNoDialog"/>
+            <input name="title" placeholder="Заголовок" required/>
+            <textarea name="description" rows="2" placeholder="Описание"></textarea>
+            <footer>
+                <button class="btn primary">Создать</button>
+                <button type="button" class="btn ghost" data-close>Отмена</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog id="dlg-reset" class="dialog">
+        <form method="post" asp-controller="Data" asp-action="ResetAll">
+            <header><strong>Сбросить все данные?</strong></header>
+            <p>Будут удалены все доски, задачи и пользователи.</p>
+            <input name="confirmWord" placeholder="Введите СБРОС для подтверждения" required/>
+            <footer>
+                <button class="btn danger">Сбросить всё</button>
+                <button type="button" class="btn ghost" data-close>Отмена</button>
+            </footer>
+        </form>
+    </dialog>
+</div>

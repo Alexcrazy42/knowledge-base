@@ -1,0 +1,48 @@
+<Window x:Class="MvvmBoard.Views.UsersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Пользователи" Height="560" Width="620"
+        WindowStartupLocation="CenterOwner" FontSize="14" Background="#F7F9FC">
+    <Window.Resources>
+        <Style x:Key="Btn" TargetType="Button">
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel Margin="16">
+        <!-- Флеш-сообщение: то же свойство Flash, тот же биндинг -->
+        <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="#E3E8F0"
+                BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,12,0,0">
+            <TextBlock Text="{Binding Flash}" Foreground="#C0392B" MinHeight="20"/>
+        </Border>
+
+        <Button DockPanel.Dock="Bottom" Content="Удалить выбранного"
+                Command="{Binding DeleteUserCommand}" HorizontalAlignment="Left"
+                Foreground="#C0392B" Padding="12,4"/>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <Button Content="Добавить" Command="{Binding AddUserCommand}"/>
+            <!-- IsEnabled биндится на CanAdd: кнопка активируется сама при вводе текста -->
+            <TextBox Text="{Binding NewUserName, UpdateSourceTrigger=PropertyChanged}"
+                     VerticalContentAlignment="Center"/>
+        </DockPanel>
+
+        <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}"
+                 Background="White" BorderBrush="#E3E8F0" Padding="6">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel Margin="4" x:Name="rowRoot">
+                        <TextBlock Text="{Binding TaskSummary}" DockPanel.Dock="Right"
+                                   Foreground="#8892A6" Margin="10,0,0,0"/>
+                        <TextBlock Text="{Binding Source.Name}" FontWeight="SemiBold"/>
+                    </DockPanel>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding HasOpen}" Value="True">
+                            <Setter TargetName="rowRoot" Property="TextElement.Foreground" Value="#B8860B"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>BoardApp.Core</RootNamespace>
+    </PropertyGroup>
+
+    <!--
+        Общая библиотека домена для ОБОИХ веб-приложений (PageController и MVP).
+
+        Зачем: цель этого playground - сравнить UI-паттерны (Razor Pages vs MVC),
+        а не бизнес-логику. Если домен общий, то вся разница между проектами
+        лежит ровно в слое представления. Это аналог "Model" из MVC:
+        чистые данные + правила, ничего не знающие про HTTP и HTML.
+    -->
+
+</Project>

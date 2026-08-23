@@ -1,0 +1,76 @@
+@* ============================================================================
+    Users/Index - страница управления пользователями.
+    Диалог удаления открывается сервером (?delete=<id>).
+   ============================================================================ *@
+@model UsersPageVm
+@{ ViewData["Title"] = "Пользователи"; }
+
+<div class="app">
+<header class="topbar">
+    <a class="brand" asp-controller="Board" asp-action="Index">Kanban <small>MVC</small></a>
+    <span class="spacer"></span>
+    <a class="btn" asp-controller="Board" asp-action="Index">← К доске</a>
+</header>
+
+<main class="narrow">
+    <h1>Пользователи-исполнители</h1>
+
+    <form method="post" asp-controller="Users" asp-action="AddUser" class="filters">
+        <input name="name" placeholder="Имя, например Анна" required/>
+        <button class="btn primary">Добавить пользователя</button>
+    </form>
+
+    <table class="task-table">
+        <thead>
+        <tr><th></th><th>Имя</th><th>Задач назначено</th><th></th></tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model.Users)
+        {
+            <tr>
+                <td><span class="avatar" style="background:@u.Color">@u.Name[..1]</span></td>
+                <td>@u.Name</td>
+                <td>@Model.CountFor(u.Id)</td>
+                <td><a class="btn small danger" asp-controller="Users" asp-action="Index"
+                       asp-route-delete="@u.Id">Удалить</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    @if (Model.Users.Count == 0)
+    {
+        <p class="muted center">Пользователей пока нет — добавьте первого.</p>
+    }
+</main>
+
+@if (Model.DeleteCandidate is { } victim)
+{
+    var count = Model.CountFor(victim.Id);
+    <dialog open class="dialog">
+        <header><strong>Удалить пользователя "@victim.Name"?</strong>
+            <a class="dialog-close" asp-controller="Users" asp-action="Index">×</a>
+        </header>
+
+        @if (count > 0)
+        {
+            <p>Этот пользователь назначен на <b>@count</b> задач. Выберите, что с ними сделать:</p>
+        }
+        <form method="post" asp-controller="Users" asp-action="DeleteUser">
+            <input type="hidden" name="userId" value="@victim.Id"/>
+            <label>Новый исполнитель для его задач
+                <select name="reassignId">
+                    <option value="">Оставить задачи нераспределёнными</option>
+                    @foreach (var other in Model.Users.Where(u => u.Id != victim.Id))
+                    {
+                        <option value="@other.Id">@other.Name</option>
+                    }
+                </select>
+            </label>
+            <footer class="dialog-footer">
+                <button class="btn danger">Удалить пользователя</button>
+                <a class="btn ghost" asp-controller="Users" asp-action="Index">Отмена</a>
+            </footer>
+        </form>
+    </dialog>
+}
+</div>

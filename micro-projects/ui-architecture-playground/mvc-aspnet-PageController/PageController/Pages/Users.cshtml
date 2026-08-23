@@ -1,0 +1,80 @@
+@page
+@* ============================================================================
+    USERS - разметка управления пользователями.
+    Диалог удаления открывается сервером: ссылка ?delete=<id> рендерит
+    <dialog open> с выбором нового исполнителя для задач удаляемого.
+   ============================================================================ *@
+@model UsersModel
+@{ ViewData["Title"] = "Пользователи"; }
+
+<div class="app">
+<header class="topbar">
+    <a class="brand" asp-page="/Index">Kanban <small>Page&nbsp;Controller</small></a>
+    <span class="spacer"></span>
+    <a class="btn" asp-page="/Index">← К доске</a>
+</header>
+
+<main class="narrow">
+    <h1>Пользователи-исполнители</h1>
+
+    @* Добавление - обычная POST-форма *@
+    <form method="post" asp-page-handler="AddUser" class="filters">
+        <input name="name" placeholder="Имя, например Анна" required/>
+        <button class="btn primary">Добавить пользователя</button>
+    </form>
+
+    <table class="task-table">
+        <thead>
+        <tr><th></th><th>Имя</th><th>Задач назначено</th><th></th></tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model.Users)
+        {
+            var count = Model.AssignmentCounts[u.Id];
+            <tr>
+                <td><span class="avatar" style="background:@u.Color">@u.Name[..1]</span></td>
+                <td>@u.Name</td>
+                <td>@count</td>
+                <td><a class="btn small danger" href="?delete=@u.Id">Удалить</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    @if (Model.Users.Count == 0)
+    {
+        <p class="muted center">Пользователей пока нет — добавьте первого.</p>
+    }
+</main>
+
+@* ---- Диалог удаления (gherkin: предупреждение о назначенных задачах) ---- *@
+@if (Model.DeleteCandidate is { } victim)
+{
+    var count = Model.AssignmentCounts[victim.Id];
+    <dialog open class="dialog">
+        <header><strong>Удалить пользователя "@victim.Name"?</strong>
+            <a class="dialog-close" asp-page="/Users">×</a>
+        </header>
+
+        @if (count > 0)
+        {
+            <p>Этот пользователь назначен на <b>@count</b> задач. Выберите, что с ними сделать:</p>
+        }
+        <form method="post" asp-page-handler="DeleteUser">
+            <input type="hidden" name="userId" value="@victim.Id"/>
+            <label>Новый исполнитель для его задач
+                <select name="reassignId">
+                    <option value="">Оставить задачи нераспределёнными</option>
+                    @foreach (var other in Model.Users.Where(u => u.Id != victim.Id))
+                    {
+                        <option value="@other.Id">@other.Name</option>
+                    }
+                </select>
+            </label>
+            <footer class="dialog-footer">
+                <button class="btn danger">Удалить пользователя</button>
+                <a class="btn ghost" asp-page="/Users">Отмена</a>
+            </footer>
+        </form>
+    </dialog>
+}
+</div> @* /app *@

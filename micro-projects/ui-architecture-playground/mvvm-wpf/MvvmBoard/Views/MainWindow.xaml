@@ -1,0 +1,199 @@
+<Window x:Class="MvvmBoard.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Канбан (MVVM / WPF)" Height="820" Width="1500"
+        WindowStartupLocation="CenterScreen" FontSize="14">
+    <Window.Resources>
+        <!-- Общий стиль кнопок верхней панели -->
+        <Style x:Key="Btn" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Margin" Value="8,0,0,0"/>
+            <Setter Property="Padding" Value="12,4"/>
+        </Style>
+
+        <!-- ============================================================
+             ШАБЛОН КАРТОЧКИ. View описывает «как выглядит задача»,
+             но не знает, откуда данные и что делать по клику - всё в биндингах.
+             ============================================================ -->
+        <DataTemplate x:Key="CardTemplate">
+            <Border Background="White" BorderBrush="#D0D4DC" BorderThickness="1"
+                    CornerRadius="6" Padding="10,8" Margin="0,0,0,10"
+                    Tag="{Binding Id}" x:Name="cardRoot"
+                    MouseMove="Card_MouseMove">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock Text="{Binding Key}" Foreground="#5B667A" FontSize="12"/>
+                        <TextBlock Text="{Binding EpicKey}" DockPanel.Dock="Right"
+                                   HorizontalAlignment="Right" Foreground="#7B61FF"
+                                   FontSize="12" Margin="6,0,0,0"/>
+                    </DockPanel>
+                    <TextBlock Text="{Binding Title}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,2"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <!-- Приоритет: цвет через DataTrigger по bool - без конвертеров -->
+                        <Border Padding="6,1" CornerRadius="3" Margin="0,0,6,0" x:Name="prioChip">
+                            <TextBlock Text="{Binding PriorityName}" FontSize="11"/>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#E9EDF3"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsHigh}" Value="True">
+                                            <Setter Property="Background" Value="#FDE3E1"/>
+                                            <Setter Property="TextBlock.Foreground" Value="#C0392B"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                        <TextBlock Text="{Binding TypeName}" Foreground="#8892A6" FontSize="12"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Assignee}" Foreground="#5B667A" FontSize="12" Margin="0,4,0,0"/>
+                    <TextBlock Text="{Binding DeadlineText}" FontSize="12" Margin="0,2,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#8892A6"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                        <Setter Property="Foreground" Value="#C0392B"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <!-- Действия карточки: команды живут в MainViewModel,
+                         поэтому DataContext добираем через RelativeSource.
+                         Параметр - Id задачи (Guid). -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                        <Button Content="✎" Command="{Binding DataContext.EditTaskCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding Id}" Padding="8,1" ToolTip="Редактировать"/>
+                        <Button Content="🗑" Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding Id}" Padding="8,1" Margin="4,0,0,0" Foreground="#C0392B"
+                                ToolTip="Удалить задачу"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <Trigger SourceName="cardRoot" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="cardRoot" Property="BorderBrush" Value="#7B61FF"/>
+                </Trigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Шаблон колонки: заголовок со счётчиком + список карточек -->
+        <DataTemplate x:Key="ColumnTemplate">
+            <Border Background="#EEF1F6" CornerRadius="8" Width="330" Margin="0,0,14,0" Padding="10">
+                <DockPanel>
+                    <TextBlock Text="{Binding Counter}" FontWeight="Bold" Margin="0,0,0,10" DockPanel.Dock="Top"/>
+                    <!-- «+ Задача» в конкретной колонке: параметр команды - State колонки -->
+                    <Button Content="+ Задача" DockPanel.Dock="Bottom" Margin="0,8,0,0"
+                            Command="{Binding DataContext.AddTaskCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding State}"/>
+                    <ListBox ItemsSource="{Binding Cards}"
+                             ItemTemplate="{StaticResource CardTemplate}"
+                             Tag="{Binding State}"
+                             Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             AllowDrop="True"
+                             Drop="Column_Drop" DragOver="Column_DragOver"/>
+                </DockPanel>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- ================= ВЕРХНЯЯ ПАНЕЛЬ: ДОСКИ ================= -->
+        <Border DockPanel.Dock="Top" Background="White" BorderBrush="#E3E8F0" BorderThickness="0,0,0,1" Padding="14,10">
+            <StackPanel Orientation="Horizontal">
+                <!-- SelectedValue+SelectedValuePath: в VM уходит Id выбранной доски -->
+                <ComboBox ItemsSource="{Binding Boards}"
+                          SelectedValue="{Binding CurrentBoardId}"
+                          SelectedValuePath="Id"
+                          DisplayMemberPath="Name"
+                          MinWidth="240" VerticalContentAlignment="Center"/>
+                <Button Content="+ Доска" Command="{Binding CreateBoardCommand}" Style="{StaticResource Btn}"/>
+                <Button Content="✎ Переименовать" Command="{Binding RenameBoardCommand}" Style="{StaticResource Btn}"/>
+                <Button Content="🗑 Удалить" Command="{Binding DeleteBoardCommand}" Style="{StaticResource Btn}"/>
+
+                <Rectangle Width="1" Margin="12,2" Fill="#E3E8F0"/>
+
+                <Button Command="{Binding SeedEpicCommand}" Style="{StaticResource Btn}"
+                        ToolTip="Эпик + 3 задачи с дедлайнами (для проверки overdue)">Тест-эпик 🧪</Button>
+                <Button Command="{Binding SeedTasksCommand}" Style="{StaticResource Btn}"
+                        ToolTip="10 случайных задач (40% todo, 30% in progress, 30% done)">+ 10 задач</Button>
+                <Button Command="{Binding CreateEpicCommand}" Style="{StaticResource Btn}">+ Эпик</Button>
+
+                <Rectangle Width="1" Margin="12,2" Fill="#E3E8F0"/>
+
+                <Button Command="{Binding ExportCommand}" Style="{StaticResource Btn}">Экспорт JSON</Button>
+                <Button Command="{Binding ImportCommand}" Style="{StaticResource Btn}">Импорт</Button>
+                <Button Command="{Binding ResetAllCommand}" Style="{StaticResource Btn}" Foreground="#C0392B">Сброс всего</Button>
+            </StackPanel>
+        </Border>
+
+        <!-- ================= ПАНЕЛЬ ФИЛЬТРОВ =================
+             Каждый контрол биндится на свойство VM; изменение текста
+             сразу пересчитывает колонки (UpdateSourceTrigger). -->
+        <Border DockPanel.Dock="Top" Background="#F7F9FC" BorderBrush="#E3E8F0" BorderThickness="0,0,0,1" Padding="14,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         MinWidth="220" VerticalContentAlignment="Center"
+                         ToolTip="Поиск по заголовку и описанию"/>
+                <ComboBox ItemsSource="{Binding AssigneeOptions}"
+                          SelectedValue="{Binding AssigneeFilter}"
+                          SelectedValuePath="Id" DisplayMemberPath="Label"
+                          MinWidth="180" Margin="10,0,0,0"/>
+                <ComboBox ItemsSource="{Binding EpicOptions}"
+                          SelectedValue="{Binding EpicFilter}"
+                          SelectedValuePath="Id" DisplayMemberPath="Label"
+                          MinWidth="200" Margin="10,0,0,0"/>
+                <CheckBox Content="Сначала High" IsChecked="{Binding SortByPriority}" Margin="12,0,0,0"
+                          VerticalAlignment="Center"/>
+                <Button Command="{Binding ResetFiltersCommand}" Style="{StaticResource Btn}">Сбросить фильтры</Button>
+                <Button Command="{Binding OpenUsersCommand}" Style="{StaticResource Btn}" Margin="24,0,0,0">Пользователи</Button>
+            </StackPanel>
+        </Border>
+
+        <!-- ================= СТАТУС-БАР (flash) ================= -->
+        <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="#E3E8F0" BorderThickness="0,1,0,0" Padding="14,6">
+            <TextBlock Text="{Binding Flash}" Foreground="#5B667A"/>
+        </Border>
+
+        <!-- ================= ЭПИКИ (слева) ================= -->
+        <Border DockPanel.Dock="Left" Background="White" BorderBrush="#E3E8F0" BorderThickness="0,0,1,0" Width="320" Padding="12">
+            <DockPanel>
+                <TextBlock Text="Эпики" FontWeight="Bold" FontSize="16" DockPanel.Dock="Top" Margin="0,0,0,10"/>
+                <Button Command="{Binding DeleteEpicCommand}" DockPanel.Dock="Bottom" Margin="0,10,0,0"
+                        Foreground="#C0392B">Удалить выбранный эпик</Button>
+                <ListBox ItemsSource="{Binding Epics}" SelectedItem="{Binding SelectedEpic}"
+                         BorderThickness="0" Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="2,4">
+                                <TextBlock Text="{Binding Label}" TextWrapping="Wrap"/>
+                                <!-- ЛОВУШКА: у RangeBase.Value (ProgressBar/Slider) биндинг
+                                     по умолчанию TwoWay! На read-only свойстве VM это даёт
+                                     XamlParseException при создании КАЖДОЙ строки списка -
+                                     приложение падает, как только появляется первый эпик.
+                                     Поэтому Mode=OneWay обязателен. -->
+                                <ProgressBar Value="{Binding Progress, Mode=OneWay}" Maximum="1" Height="6" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- ================= КАНБАН (центр) =================
+             ItemsControl рисует колонку на каждый элемент Columns -
+             VM лишь кладёт туда данные. Никаких ShowColumns() из MVP. -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Columns}"
+                          ItemTemplate="{StaticResource ColumnTemplate}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="14"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

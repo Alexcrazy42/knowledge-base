@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>MvvmBoard</RootNamespace>
+        <!-- ВАЖНО: НЕ включать InvariantGlobalization - без ICU у WPF-биндинга
+             падает XmlLanguage.GetSpecificCulture() ("Cannot find non-neutral
+             culture"), а форме задачи нужен парсинг русских дат dd.MM.yyyy -->
+        <NoWarn>$(NoWarn);WFO1000</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\BoardApp.Core\BoardApp.Core.csproj" />
+    </ItemGroup>
+
+</Project>

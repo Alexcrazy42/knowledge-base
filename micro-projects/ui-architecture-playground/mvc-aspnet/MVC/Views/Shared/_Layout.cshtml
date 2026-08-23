@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@ViewData["Title"] - Kanban (MVC)</title>
+    <link rel="stylesheet" href="~/css/board.css" asp-append-version="true"/>
+</head>
+<body>
+@* Layout - только скелет. Контент приходит от конкретной view через RenderBody.
+      В MVC layout ищется по конвенции: Views/Shared/_Layout.cshtml,
+      подключается через _ViewStart.cshtml (Layout = "_Layout"). *@
+@RenderBody()
+
+@if (TempData["Flash"] is string flash)
+{
+    <div class="flash">@flash</div>
+}
+
+<script src="~/js/board.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

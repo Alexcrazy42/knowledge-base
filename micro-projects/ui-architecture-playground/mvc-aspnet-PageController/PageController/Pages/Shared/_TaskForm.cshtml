@@ -1,0 +1,84 @@
+@* ============================================================================
+    ПАРТИАЛ формы задачи. Один и тот же для СОЗДАНИЯ (Existing == null)
+    и РЕДАКТИРОВАНИЯ - различаем только целевой хендлер и предзаполнение.
+    Имена полей (name="title" и т.д.) совпадают с аргументами POST-хендлеров
+    OnPostCreateTask / OnPostUpdateTask из IndexModel.
+   ============================================================================ *@
+@using BoardApp.Core
+@model PageController.ViewModels.TaskFormVm
+@{
+    var t = Model.Existing;   // null => создание
+}
+<form method="post" asp-page-handler="@(t is null ? "CreateTask" : "UpdateTask")" class="task-form">
+    <input type="hidden" name="boardId" value="@Model.BoardId"/>
+    @if (t is not null)
+    {
+        <input type="hidden" name="taskId" value="@t.Id"/>
+    }
+
+    <label>Заголовок
+        <input name="title" value="@t?.Title" required maxlength="200"/>
+    </label>
+
+    <label>Описание
+        <textarea name="description" rows="3">@t?.Description</textarea>
+    </label>
+
+    <div class="grid2">
+        <label>Исполнитель
+            <select name="assigneeId">
+                <option value="">— не назначен —</option>
+                @foreach (var u in Model.Users)
+                {
+                    <option value="@u.Id" selected="@(t?.AssigneeId == u.Id)">@u.Name</option>
+                }
+            </select>
+        </label>
+
+        <label>Эпик
+            <select name="epicId">
+                <option value="">— без эпика —</option>
+                @foreach (var e in Model.Epics)
+                {
+                    <option value="@e.Id" selected="@(t?.EpicId == e.Id)">EPIC-@e.Number · @e.Title</option>
+                }
+            </select>
+        </label>
+
+        <label>Колонка (статус)
+            <select name="state">
+                @foreach (var s in Enum.GetValues<TaskState>())
+                {
+                    <option value="@s" selected="@(t is null ? s == Model.DefaultState : t.State == s)">@s.ToDisplay()</option>
+                }
+            </select>
+        </label>
+
+        <label>Тип
+            <select name="type">
+                @foreach (var tp in Enum.GetValues<WorkItemType>())
+                {
+                    <option value="@tp" selected="@(t?.Type == tp)">@tp.ToDisplay()</option>
+                }
+            </select>
+        </label>
+
+        <label>Приоритет
+            <select name="priority">
+                @foreach (var p in Enum.GetValues<Priority>())
+                {
+                    <option value="@p" selected="@(t is null ? p == Priority.Medium : t.PriorityLevel == p)">@p.ToDisplay()</option>
+                }
+            </select>
+        </label>
+
+        <label>Дедлайн
+            <input type="date" name="deadline" value="@t?.Deadline?.ToString("yyyy-MM-dd")"/>
+        </label>
+    </div>
+
+    <footer class="dialog-footer">
+        <button class="btn primary">@(t is null ? "Создать" : "Сохранить")</button>
+        <button type="button" class="btn ghost" data-close>Отмена</button>
+    </footer>
+</form>
