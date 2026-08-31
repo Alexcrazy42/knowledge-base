@@ -1,0 +1,73 @@
+<!-- ============================================================================
+     Корневой шаблон. Обратите внимание, чего здесь НЕТ:
+       - логики фильтрации (computed в VM)
+       - обращений к стору (только команды VM)
+       - кода "перерисуй колонки" (сигналы делают это сами)
+     ============================================================================ -->
+
+<div class="app">
+    <app-top-bar [vm]="vm" (openUsers)="showUsers.set(true)"/>
+
+    <!-- Фильтры: [(value)]-подобные биндинги на сигналы VM.
+         Изменился текст -> visibleTasks пересчитался -> канбан обновился. -->
+    <div class="filter-bar">
+        <input class="input search" placeholder="Поиск по заголовку и описанию" #searchBox
+               [value]="vm.search()" (input)="vm.search.set(searchBox.value)"/>
+
+        <select class="input" #assigneeSel
+                [value]="vm.assigneeFilter() ?? ''"
+                (change)="vm.assigneeFilter.set(assigneeSel.value === '' ? null : assigneeSel.value)">
+            @for (o of vm.assigneeOptions(); track $index) {
+                <option [value]="o.id ?? ''">{{ o.label }}</option>
+            }
+        </select>
+
+        <select class="input" #epicSel
+                [value]="vm.epicFilter() ?? ''"
+                (change)="vm.epicFilter.set(epicSel.value === '' ? null : epicSel.value)">
+            @for (o of vm.epicOptions(); track $index) {
+                <option [value]="o.id ?? ''">{{ o.label }}</option>
+            }
+        </select>
+
+        <label class="checkbox">
+            <input type="checkbox" [checked]="vm.sortByPriority()"
+                   (change)="vm.sortByPriority.set(checkbox.checked)" #checkbox/>
+            Сначала High
+        </label>
+
+        <button class="btn" (click)="vm.resetFilters()">Сбросить фильтры</button>
+    </div>
+
+    <div class="workspace">
+        <app-epic-panel [epics]="vm.epicsWithProgress()"
+                        [(selected)]="selectedEpic"
+                        (remove)="vm.deleteEpic($event)"/>
+
+        <main class="board-area">
+            @if (!vm.currentBoard()) {
+                <p class="empty">Создайте первую доску кнопкой «+ Доска»</p>
+            } @else {
+                <div class="columns">
+                    @for (col of vm.columns(); track col.state) {
+                        <app-kanban-column [column]="col"
+                                           (add)="vm.openTaskEditor(null, $event)"
+                                           (edit)="vm.openTaskEditor($event.task)"
+                                           (remove)="vm.deleteTask($event)"
+                                           (dropTask)="vm.moveTask($event.taskId, $event.state, $event.index)"/>
+                    }
+                </div>
+            }
+        </main>
+    </div>
+
+    <!-- Flash: обычный биндинг сигнала -->
+    <footer class="status-bar">{{ vm.flash() }}</footer>
+
+    <!-- Все promise-диалоги главного экрана -->
+    <app-modals-host/>
+
+    @if (showUsers()) {
+        <app-users-modal (closed)="showUsers.set(false)"/>
+    }
+</div>

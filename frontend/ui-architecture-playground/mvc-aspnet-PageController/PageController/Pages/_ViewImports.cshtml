@@ -1,0 +1,11 @@
+@* ============================================================================
+    _ViewImports - глобальные using'и и настройки для ВСЕХ страниц.
+
+    @using        - пространства имён, доступные в разметке (наши модели Core)
+    @namespace    - корневой namespace генерируемых классов
+    @addTagHelper - включаем tag helpers (asp-page, asp-for и т.д.)
+   ============================================================================ *@
+@using BoardApp.Core
+@using PageController.ViewModels
+@namespace PageController.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers

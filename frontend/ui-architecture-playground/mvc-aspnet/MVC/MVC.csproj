@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\BoardApp.Core\BoardApp.Core.csproj" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <!-- Явно фиксируем корневой namespace: контроллеры/вьюхи живут в MVC.* -->
+        <RootNamespace>MVC</RootNamespace>
+        <InvariantGlobalization>true</InvariantGlobalization>
+    </PropertyGroup>
+
+</Project>

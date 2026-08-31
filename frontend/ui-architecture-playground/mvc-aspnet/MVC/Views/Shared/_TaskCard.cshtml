@@ -1,0 +1,34 @@
+@* ============================================================================
+    ПАРТИАЛ карточки канбана. Тот же приём, что и в PageController:
+    партиалу передаётся готовая TaskCardVm, он не знает про страницу-родителя.
+   ============================================================================ *@
+@model TaskCardVm
+@{
+    var t = Model.Task;
+}
+<div class="card prio-@t.PriorityLevel.ToString().ToLowerInvariant()"
+     draggable="true" data-task-id="@t.Id">
+    <div class="card-top">
+        <a class="key" href="@Model.DetailsUrl">TASK-@t.Number</a>
+        <span class="badge type">@t.Type.ToDisplay()</span>
+    </div>
+    <div class="card-title">@t.Title</div>
+    <div class="card-meta">
+        @if (Model.Assignee is not null)
+        {
+            <span class="avatar" style="background:@Model.Assignee.Color" title="@Model.Assignee.Name">@Model.Assignee.Name[..1]</span>
+        }
+        else
+        {
+            <span class="avatar ghost" title="Без исполнителя">?</span>
+        }
+        @if (t.Deadline is { } dl)
+        {
+            <span class="deadline@(dl < DateOnly.FromDateTime(DateTime.Today) && t.State != TaskState.Done ? " overdue" : "")">@dl.ToString("dd.MM")</span>
+        }
+        @if (Model.Epic is not null)
+        {
+            <span class="epic-tag">EPIC-@Model.Epic.Number</span>
+        }
+    </div>
+</div>

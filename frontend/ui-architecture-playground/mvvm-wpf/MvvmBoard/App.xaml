@@ -1,0 +1,8 @@
+<Application x:Class="MvvmBoard.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- ЛОВУШКА: StartupUri здесь НЕ нужен - он создаст и покажет MainWindow
+         БЕЗ DataContext, а OnStartup создаст второй экземпляр поверх. Пользователь
+         видит верхнее "пустое" окно: команды ни к чему не привязаны, и клики по
+         кнопкам ничего не делают. Всё окно создаётся вручную в App.xaml.cs. -->
+</Application>

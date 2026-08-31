@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <!-- -windows: WinForms доступен только на Windows -->
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <UseWindowsForms>true</UseWindowsForms>
+        <!-- чёткий рендер и корректный масштаб на экранах с масштабированием >100% -->
+        <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+        <!-- ОДНА точка настройки размера шрифта всего приложения: формы и диалоги
+             наследуют его автоматически (явные Font в формах не нужны). -->
+        <ApplicationDefaultFont>Segoe UI, 14</ApplicationDefaultFont>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>BoardApp</RootNamespace>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <!--
+          WFO1000: анализатор требует DesignerSerializationVisibility для публичных
+          свойств форм. Наш UI строится кодом (не дизайнером), интерфейсные свойства
+          - часть контракта MVP, а не состояние дизайнера => предупреждение отключено.
+        -->
+        <NoWarn>$(NoWarn);WFO1000</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\BoardApp.Core\BoardApp.Core.csproj" />
+    </ItemGroup>
+
+</Project>

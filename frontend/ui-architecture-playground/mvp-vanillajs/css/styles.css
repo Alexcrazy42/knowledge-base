@@ -1,0 +1,287 @@
+/* ============================================================================
+   Стили Vanilla JS MVP. Крупные размеры - как в WinForms-версии (14pt база).
+   ========================================================================== */
+
+* { box-sizing: border-box; }
+
+:root {
+    --border: #d0d4dc;
+    --bg-soft: #f6f7f9;
+    --primary: #2563eb;
+    --danger: #b91c1c;
+    --text-dim: #5b6472;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 18px;                 /* крупно для 2880x1440 */
+    color: #1f2430;
+    background: #eef0f4;
+}
+
+.hidden { display: none !important; }
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* ---------- тулбары ---------- */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.toolbar label { color: var(--text-dim); }
+
+.spacer { width: 22px; }
+
+button, select, input[type="text"], input[type="search"], input[type="date"], textarea {
+    font: inherit;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+}
+
+input[type="text"], input[type="search"], input[type="date"], textarea { cursor: text; }
+select { min-height: 44px; }
+#boards-select { min-width: 220px; }
+#filter-assignee { min-width: 190px; }
+#filter-epic { min-width: 260px; }
+#search { min-width: 230px; }
+
+button:hover:not(:disabled) { filter: brightness(0.95); }
+button:disabled { opacity: 0.45; cursor: default; }
+
+button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+button.danger { color: var(--danger); border-color: #f3c1c1; }
+
+/* ---------- вкладки ---------- */
+
+.tabs { display: flex; gap: 6px; padding: 10px 14px 0; }
+.tabs button {
+    border-radius: 10px 10px 0 0;
+    border-bottom: none;
+    background: var(--bg-soft);
+}
+.tabs button.active { background: #fff; font-weight: 600; }
+
+/* ---------- канбан ---------- */
+
+.board-layout {
+    display: flex;
+    flex: 1;
+    gap: 14px;
+    padding: 0 14px 14px;
+    background: #fff;
+    min-height: 0;                   /* чтобы колонки скроллились внутри */
+}
+
+.columns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-soft);
+    border: 2px dashed transparent;   /* место под drop-target подсветку */
+    border-radius: 12px;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.column.drop-target { border-color: var(--primary); background: #eaf1ff; }
+
+.column-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.column-head h2 { margin: 0; font-size: 19px; color: var(--text-dim); }
+
+.add-task {
+    width: 46px; height: 40px;
+    font-size: 24px; font-weight: 700; line-height: 1;
+}
+
+.cards { display: flex; flex-direction: column; gap: 10px; }
+
+.card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-left: 6px solid transparent;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: grab;
+    user-select: none;
+}
+.card.dragging { opacity: 0.45; }
+
+.priority-high   { border-left-color: #ef4444; background: #fff5f5; }
+.priority-medium { border-left-color: #eab308; background: #fffdf2; }
+.priority-low    { border-left-color: #22c55e; background: #f4fbf6; }
+.card.overdue    { outline: 2px solid #ef4444; }
+
+.card-top { display: flex; justify-content: space-between; align-items: center; }
+.key { font-weight: 600; color: var(--text-dim); font-size: 15px; }
+
+.card-delete {
+    border: none; background: none;
+    font-size: 20px; line-height: 1;
+    padding: 2px 8px; color: var(--text-dim);
+}
+.card-delete:hover { color: var(--danger); }
+
+.card-title { margin: 4px 0; font-weight: 600; }
+
+.card-meta { font-size: 15px; color: var(--text-dim); }
+.assignee { color: var(--primary); }
+
+.card-extra {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 6px; font-size: 15px;
+}
+.deadline { color: var(--text-dim); }
+.overdue-badge { color: var(--danger); font-weight: 700; }
+
+.epic-chip {
+    background: #ede9fe; color: #6d28d9;
+    border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 600;
+}
+
+/* ---------- сайдбар эпиков ---------- */
+
+.epics {
+    width: 320px;
+    display: flex; flex-direction: column; gap: 10px;
+    border-left: 1px solid var(--border);
+    padding-left: 16px;
+}
+.epics h2 { margin: 0; font-size: 20px; }
+#epics-list {
+    list-style: none; margin: 0; padding: 0;
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+}
+#epics-list li {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 9px 12px;
+    background: var(--bg-soft);
+    border-radius: 8px;
+    cursor: pointer;
+}
+#epics-list li.selected { outline: 2px solid var(--primary); background: #eaf1ff; }
+#epics-list li.empty { color: var(--text-dim); cursor: default; }
+
+/* ---------- таблица ---------- */
+
+#table-section { flex: 1; background: #fff; padding: 0 14px 14px; overflow: auto; }
+#tasks-table { width: 100%; border-collapse: collapse; }
+#tasks-table th, #tasks-table td {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px; text-align: left;
+}
+#tasks-table th { color: var(--text-dim); font-weight: 600; }
+
+/* ---------- статусбар ---------- */
+
+.statusbar {
+    padding: 8px 16px;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    min-height: 42px;
+}
+
+/* ---------- экран пользователей ---------- */
+
+.users-screen {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50;
+}
+
+.users-panel {
+    width: min(560px, 92vw);
+    max-height: 86vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.25);
+}
+.users-panel h2 { margin: 0 0 14px; }
+
+.users-list { list-style: none; margin: 0 0 14px; padding: 0; }
+.users-list li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+}
+.users-list li.empty { color: var(--text-dim); }
+.users-list small { color: var(--text-dim); }
+
+.add-row { display: flex; gap: 10px; }
+.add-row input { flex: 1; }
+
+.flash { min-height: 26px; color: var(--primary); margin: 10px 0; }
+
+/* ---------- модальные окна ---------- */
+
+.modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+}
+
+.modal {
+    width: min(520px, 92vw);
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.25);
+    display: flex; flex-direction: column; gap: 12px;
+}
+.modal.wide { width: min(640px, 94vw); }
+.modal h3 { margin: 0; }
+.modal p { margin: 0; }
+.modal label { color: var(--text-dim); }
+.modal select, .modal input[type="text"], .modal input[type="date"] { width: 100%; }
+
+.modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+.modal-buttons.column { flex-direction: column; }
+.modal-buttons button { min-height: 46px; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 10px 12px;
+    align-items: center;
+}
+.form-grid textarea { resize: vertical; }
+.deadline-row { display: flex; gap: 10px; align-items: center; }
+.validation { color: var(--danger); font-weight: 600; min-height: 22px; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #c3c9d4; border-radius: 6px; }

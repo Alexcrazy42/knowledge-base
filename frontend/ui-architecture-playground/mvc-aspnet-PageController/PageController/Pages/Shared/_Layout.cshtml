@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    @* Заголовок страницы задаётся из PageModel через ViewData["Title"] *@
+    <title>@ViewData["Title"] - Kanban (Page Controller)</title>
+    <link rel="stylesheet" href="~/css/board.css" asp-append-version="true"/>
+</head>
+<body>
+@* Layout - только HTML-скелет. Корневой контейнер с data-* атрибутами
+      (endpoint для drag-and-drop, id доски) рендерит сама страница,
+      потому что только она знает эти значения. *@
+@RenderBody()
+
+@* Одноразовые всплывающие сообщения (TempData["Flash"]) *@
+@if (TempData["Flash"] is string flash)
+{
+    <div class="flash">@flash</div>
+}
+
+@* asp-append-version добавляет ?v=хэш к URL - сброс браузерного кэша при изменении файла *@
+<script src="~/js/board.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

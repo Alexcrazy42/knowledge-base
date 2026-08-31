@@ -1,0 +1,225 @@
+/* ============================================================================
+   board.css - стили канбана. Общие для обоих приложений-близнецов.
+   Никаких фреймворков: CSS-переменные + flexbox/grid.
+   ========================================================================== */
+
+:root {
+    --bg: #10151c;
+    --panel: #1a2230;
+    --panel-2: #212c3d;
+    --line: #2d3b50;
+    --text: #dbe4f0;
+    --muted: #8296ad;
+    --accent: #4f8cff;
+    --danger: #ff5d5d;
+    --ok: #43cc7a;
+    --warn: #ffb02e;
+    --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 "Segoe UI", system-ui, sans-serif;
+}
+
+.app { max-width: 1400px; margin: 0 auto; padding: 12px 16px 40px; }
+
+/* ---------- верхняя панель ---------- */
+.topbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 8px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px;
+}
+.brand { font-size: 18px; font-weight: 700; color: var(--text); text-decoration: none; }
+.brand small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+.spacer { flex: 1; }
+.inline { display: inline-flex; }
+
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.tabs a {
+    padding: 6px 14px; color: var(--muted); text-decoration: none; background: var(--panel);
+}
+.tabs a.active { background: var(--accent); color: #fff; }
+
+/* ---------- кнопки и поля ---------- */
+.btn, select, input, textarea {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font: inherit;
+}
+.btn { cursor: pointer; text-decoration: none; display: inline-block; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { color: var(--danger); }
+.btn.danger:hover { border-color: var(--danger); }
+.btn.ghost { background: transparent; }
+.btn.big { padding: 12px 26px; font-size: 16px; }
+.btn.wide { width: 100%; margin-bottom: 10px; }
+.btn.small { padding: 3px 8px; font-size: 12px; }
+
+.file-btn { position: relative; overflow: hidden; }
+.file-btn input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+
+.filters {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 14px; padding: 10px; background: var(--panel); border-radius: var(--radius);
+}
+.filters input[type="search"] { min-width: 220px; }
+
+/* ---------- layout: канбан + сайдбар эпиков ---------- */
+.layout { display: grid; grid-template-columns: 1fr 260px; gap: 14px; align-items: start; }
+.narrow { max-width: 720px; margin: 0 auto; }
+
+.kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+.column {
+    background: var(--panel);
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    display: flex; flex-direction: column; min-height: 300px;
+}
+.column.drop-target { border-color: var(--accent); }     /* подсветка зоны дропа */
+
+.column-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; font-weight: 600; border-bottom: 1px solid var(--line);
+}
+.column-header .count { color: var(--muted); font-weight: 400; }
+.add-card { margin-left: auto; color: var(--muted); text-decoration: none; font-size: 18px; }
+.add-card:hover { color: var(--accent); }
+
+.column-body { padding: 8px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+/* ---------- карточка ---------- */
+.card {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: grab;
+}
+.card.dragging { opacity: .45; }                          /* gherkin: полупрозрачность при переносе */
+
+.card.prio-high   { border-left-color: var(--danger); }
+.card.prio-medium { border-left-color: var(--warn); }
+.card.prio-low    { border-left-color: var(--muted); }
+
+.card-top { display: flex; justify-content: space-between; gap: 6px; }
+.key { color: var(--muted); font-family: Consolas, monospace; font-size: 12px; text-decoration: none; }
+.key:hover { color: var(--accent); }
+
+.card-title { margin: 4px 0 6px; }
+.card-title a { color: var(--text); text-decoration: none; }
+.card-title a:hover { color: var(--accent); }
+
+.card-meta { display: flex; align-items: center; gap: 6px; }
+.deadline { color: var(--muted); font-size: 12px; }
+.deadline.overdue { color: var(--danger); }
+.epic-tag {
+    margin-left: auto; font-size: 11px; padding: 1px 7px;
+    border-radius: 999px; background: #35507a; color: #bcd2f5;
+}
+.avatar {
+    width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; vertical-align: middle;
+}
+.avatar.ghost { background: var(--line); color: var(--muted); }
+
+.badge {
+    font-size: 11px; padding: 1px 8px; border-radius: 999px;
+    background: var(--line); white-space: nowrap;
+}
+.badge.st-done        { background: #1e4630; color: #7fe3a8; }
+.badge.st-inprogress  { background: #4a3a15; color: #ffd479; }
+.badge.st-todo        { background: var(--line); color: var(--muted); }
+.badge.prio-high      { background: #4a2020; color: #ff9d9d; }
+.badge.prio-medium    { background: #4a3a15; color: #ffd479; }
+.badge.prio-low       { background: var(--line); color: var(--muted); }
+
+/* индикатор вставки при drag-and-drop */
+.insert-before { box-shadow: 0 -3px 0 0 var(--accent); }
+.insert-end .column-body::after {
+    content: ""; height: 3px; background: var(--accent); border-radius: 2px;
+}
+
+/* ---------- таблица списка задач ---------- */
+.task-table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: var(--radius); overflow: hidden; }
+.task-table th, .task-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.task-table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+.task-table tbody tr:hover { background: var(--panel-2); }
+.task-table a { color: var(--text); text-decoration: none; }
+.task-table a:hover { color: var(--accent); }
+
+/* ---------- сайдбар эпиков ---------- */
+.epics { background: var(--panel); border-radius: var(--radius); padding: 12px; }
+.epics h3 { margin: 4px 0 10px; }
+.epic { padding: 10px 0; border-top: 1px solid var(--line); }
+.epic:first-of-type { border-top: none; }
+.epic-title { font-weight: 600; display: flex; justify-content: space-between; gap: 6px; }
+.icon-link { text-decoration: none; }
+.danger { color: var(--danger); }
+
+.progress {
+    height: 6px; border-radius: 4px; background: var(--line); margin: 6px 0 3px; overflow: hidden;
+}
+.progress > div { height: 100%; background: var(--ok); }
+
+.small { font-size: 12px; color: var(--muted); }
+.muted { color: var(--muted); }
+.center { text-align: center; }
+.prewrap { white-space: pre-wrap; }
+
+/* ---------- диалоги (нативный <dialog>) ---------- */
+dialog.dialog {
+    min-width: 420px; max-width: 560px;
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 0;
+}
+dialog.dialog::backdrop { background: rgba(0, 0, 0, .55); }
+dialog.dialog header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-bottom: 1px solid var(--line);
+}
+dialog.dialog header strong { margin-right: auto; }
+dialog.dialog form > * , dialog.dialog > *:not(header) { margin: 10px 14px; }
+dialog.dialog footer { display: flex; gap: 8px; justify-content: flex-end; padding-bottom: 14px; }
+.dialog-close {
+    margin-left: auto; text-decoration: none; color: var(--muted); font-size: 20px; line-height: 1;
+}
+.dialog-close:hover { color: var(--danger); }
+.dialog-footer { display: flex; gap: 8px; justify-content: flex-end; }
+
+label { display: block; margin-bottom: 8px; }
+label input, label select, label textarea { width: 100%; margin-top: 3px; }
+input[type="radio"] { width: auto !important; margin-right: 6px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.task-form label { display: block; }
+
+/* ---------- прочее ---------- */
+.hero { text-align: center; padding: 120px 20px; }
+.hero p { color: var(--muted); }
+
+.flash {
+    position: fixed; right: 18px; bottom: 18px;
+    background: var(--panel-2); border: 1px solid var(--accent);
+    color: var(--text); padding: 10px 16px; border-radius: var(--radius);
+    box-shadow: 0 6px 24px rgba(0,0,0,.45); z-index: 50;
+}
+
+details.details dl, dl.details { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 10px 14px; }
+dl.details dt { color: var(--muted); }
+dl.details dd { margin: 0; }
+
+h1 { font-size: 22px; }
+h2 { font-size: 17px; margin: 10px 14px 0; }
