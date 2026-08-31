@@ -5,6 +5,8 @@
 агент, субагент, harness, agent runtime, Read-Eval-Print Loop, Headless Agent
 skill, mcp, lsp, context
 
+Агент — это LLM + tools + state machine + safety layer + memory + observability
+
 как синхрить разные инструменты: AGENTS.md, Инструмент agent-mcp-hub, agent-channel
 
 ____________________________________________
