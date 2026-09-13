@@ -11,7 +11,7 @@ public class OrderController : ControllerBase
     [HttpGet]
     public List<string> GetInfo()
     {
-        var a = User;
+        var user = User;
         return ["1", "2", "3"];
     }
     

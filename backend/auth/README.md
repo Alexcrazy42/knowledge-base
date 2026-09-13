@@ -137,6 +137,33 @@ connect/userinfo - возвращает claims о пользователе в ф
 # Пример
 
 TODO:
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 Браузер
+    participant SPA as 📱 SPA (Client)
+    participant Auth as 🔐 Auth Server (You)
+    participant GH as 🐙 GitHub
+
+    User->>SPA: Жмет "Login with GitHub"
+    SPA->>Auth: GET /connect/authorize (Start OIDC flow)
+    Auth->>User: Show "Login with GitHub" button
+    
+    User->>Auth: Click Button
+    Auth->>GH: Redirect to GitHub OAuth
+    GH->>User: Show Consent Screen
+    User->>GH: Click Authorize
+    GH->>Auth: Redirect with ?code=GH_CODE_123
+    
+    Note over Auth: 1. Exchange GH_CODE for GH Token<br/>2. Find/Create User in Identity<br/>3. SignInAsync (Set Identity Cookie)<br/>4. Generate OWN OIDC_CODE_XYZ
+    
+    Auth->>User: Redirect to SPA with ?code=OIDC_CODE_XYZ
+    User->>SPA: Receive OIDC_CODE_XYZ
+    SPA->>Auth: POST /connect/token (code=OIDC_CODE_XYZ)
+    Auth->>SPA: Return Access/Refresh Tokens
+```
+
+
 identity server - C#
 микросервисы (client) - C# + go
 авторизация через вк как identity server + сделать апи вызов в вк как к resource server (OAuth)

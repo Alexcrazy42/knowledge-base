@@ -37,6 +37,13 @@ public class AuthorizationController: ControllerBase
         _logger = logger;
     }
 
+    // [HttpGet("authorize")]
+    // [HttpPost("authorize")]
+    // public async Task<IActionResult> Authorize()
+    // {
+    //     // ...
+    // }
+    
     [HttpPost]
     [Route("token")]
     public async Task<IActionResult> Token()
