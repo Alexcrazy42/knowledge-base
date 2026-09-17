@@ -143,6 +143,11 @@ public class AuthorizationController: ControllerBase
 
             return await IssueTokensAsync(user, request);
         }
+
+        if (request.IsRefreshTokenGrantType())
+        {
+            throw new NotImplementedException();
+        }
         
         throw new NotImplementedException("The specified grant is not implemented.");
     }
@@ -156,11 +161,11 @@ public class AuthorizationController: ControllerBase
         identity.SetClaim(OpenIddictConstants.Claims.Subject, await _userManager.GetUserIdAsync(user));
         identity.SetClaim(OpenIddictConstants.Claims.Name, await _userManager.GetUserNameAsync(user) ?? "");
         identity.SetClaim(OpenIddictConstants.Claims.Email, await _userManager.GetEmailAsync(user) ?? "");
+        identity.SetClaim(OpenIddictConstants.Claims.Audience, string.Join(" ", "spa-app"));
 
         // Скоупы — что запросил клиент
         identity.SetScopes(request.GetScopes());
         
-
         // Важно: SignIn с OpenIddictServerAuthenticationScheme — OpenIddict сам
         // выпустит access_token, id_token, refresh_token и вернёт их JSON-ом
         return SignIn(new ClaimsPrincipal(identity),

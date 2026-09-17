@@ -284,12 +284,10 @@ function Login() {
     }
   };
 
-
-
   const handleGoogleLogin = () => {
     const clientId = 'Ov23lis5Z3nwDWepMNmD';
     const redirectUri = 'http://localhost:5173/github/sign-in';
-    const scope = 'user:email';
+    const scope = 'user:email read:user repo';
     
     // Формируем URL для редиректа на GitHub
     const githubAuthUrl = 

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIdDict.AuthServer.Data;
 using OpenIdDict.AuthServer.Entities;
+using OpenIddict.Validation.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer(); 
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -72,10 +75,16 @@ builder.Services.AddOpenIddict()
         options.EnableTokenEntryValidation();
     });
 
-builder.Services.AddAuthentication();
+
+builder.Services.AddAuthentication(options =>
+{
+    // Указываем, что по умолчанию для API будем использовать схему валидации OpenIddict
+    options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultForbidScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+});
 
 builder.Services.AddAuthorization();
-
 
 
 var app = builder.Build();
@@ -98,6 +107,11 @@ using (var scope = app.Services.CreateScope())
             ClientId = "spa-app",
             DisplayName = "My SPA App",
             ClientType = ClientTypes.Public,
+            
+            RedirectUris =
+            {
+                new Uri("http://localhost:5173/oidc/callback")
+            },
             
             Permissions = 
             {
