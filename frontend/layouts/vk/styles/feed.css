@@ -1,0 +1,197 @@
+﻿#feed-menu-apps {
+    margin-left: 5px;
+
+    ul {
+        padding-left: 0;
+        list-style-type: none;
+    }
+
+    li {
+        display: flex;
+        gap: 5px;
+        justify-content: start;
+        margin-top: 3px;
+        cursor: pointer;
+
+        .counter {
+            margin-left: auto;
+            background-color: #828a99;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        transition: 
+            background-color 0.1s ease-in-out;
+    }
+
+    li:hover {
+        background-color: #bac2d2;
+        border-radius: 2px;
+    }
+}
+
+#histories {
+    display: flex;
+    gap: 15px;
+    padding: 20px;
+
+    /* Запрещаем перенос на новую строку */
+    flex-wrap: nowrap;
+
+    /* Включаем горизонтальную прокрутку, если контент не влезает */
+    overflow-x: auto;
+
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 transparent;
+}
+
+.own, .history {
+    flex-shrink: 0; /* Запрещаем элементам уменьшаться меньше их ширины */
+}
+
+.own .main {
+    position: relative;
+    width: 100px;
+    height: 170px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    
+    background-image: url('https://sun1-25.vkuserphoto.ru/s/v1/ig2/Q8yCSAaOV-9y2XtBqcEe-Kyc5SFpXOLClz0874gQLkqKJC51KqEnUQwC2d8LCOkCi3k2cAnw247_a1SM80IR5GXO.jpg?quality=95&crop=0,213,853,853&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720&ava=1&u=YUmGdyaszevqHtCqUhay-S2I2ak0BbTISpUaSIZ4NsU&cs=240x240');
+    background-size: cover;
+    background-position: center;
+    
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    .add {
+        position: absolute;
+        bottom: 12px;
+        left: 0;
+        width: 100%;
+        z-index: 2;
+        
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+
+.own:hover .main {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    
+    transition: 
+        transform 0.2s ease, 
+        background 0.2s ease;
+}
+
+.own:hover .icon {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.add {
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.settings {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+}
+
+.settings svg {
+    color: white;
+}
+
+.own:hover .settings {
+    opacity: 1;
+    transform: scale(1);
+}
+
+
+
+.history {
+    position: relative;
+    width: 100px;
+    height: 170px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    
+    background-image: url('https://sun1-25.vkuserphoto.ru/s/v1/ig2/Q8yCSAaOV-9y2XtBqcEe-Kyc5SFpXOLClz0874gQLkqKJC51KqEnUQwC2d8LCOkCi3k2cAnw247_a1SM80IR5GXO.jpg?quality=95&crop=0,213,853,853&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720&ava=1&u=YUmGdyaszevqHtCqUhay-S2I2ak0BbTISpUaSIZ4NsU&cs=240x240');
+    background-size: cover;
+    background-position: center;
+    
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    .owner {
+        position: absolute;
+        color: white;
+        bottom: 12px;
+        left: 0;
+        width: 100%;
+        z-index: 2;
+        
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo img {
+            width: 50%;
+            border-radius: 50%;
+        }
+    }
+}
+
+.history:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+
+/* todo */
+0. истории: кнопки + мотаем мышкой вправо влево
+/* 1. лента
+2. тулы
+3. нижний список чатов
+4. общий экран чатов
+5. адаптивная верстка под разные экраны */
