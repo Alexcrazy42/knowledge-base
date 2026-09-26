@@ -8,14 +8,11 @@ namespace OpenIdDict.AuthServer.Controllers;
 public class AccountController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
 
     public AccountController(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        UserManager<ApplicationUser> userManager)
     {
         _userManager = userManager;
-        _signInManager = signInManager;
     }
 
     [HttpPost("register")]
