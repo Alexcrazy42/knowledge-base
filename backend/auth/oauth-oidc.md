@@ -158,4 +158,3 @@ AspNetRoleClaims - утверждения для ролей (id, roleId, claimTy
 AspNetUserLogins - внешние провайдеры и входы через них (id, userId, loginProvider, providerKey)
 
 AspNetUserTokens - токены для внутренних нужд identity (id, userId, loginProvider, name, value)
-
