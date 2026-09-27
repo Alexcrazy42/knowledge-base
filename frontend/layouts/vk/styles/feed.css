@@ -281,7 +281,9 @@
 }
 
 #news-feed .create-news {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 10;
     margin: auto;
     margin-top: 20px;
     display: flex;
