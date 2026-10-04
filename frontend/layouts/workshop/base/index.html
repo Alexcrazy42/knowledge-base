@@ -9,6 +9,11 @@
 <body>
     <header>
         Хедер
+
+        <button class="theme-toggle" id="themeToggle">
+            <span id="themeIcon">🌙</span>
+            <span id="themeText">Темная тема</span>
+        </button>
     </header>
 
     <div id="block-vs-inline">
@@ -77,7 +82,34 @@
     <hr class="dashed-divider">
 
 
-    <div id="hero-section"></div>
+
+    <!-- Заменили background-image на <picture> + <img>. Браузер теперь видит картинку сразу при чтении HTML, а не ждет загрузки CSS. Это резко ускоряет метрику LCP (время отрисовки главного контента). 
+        
+    Добавили высший приоритет загрузки: атрибуты loading="eager" и fetchpriority="high" заставляют браузер качать эту картинку в первую очередь, опережая скрипты и шрифты.    
+    -->
+    <div class="hero-wrapper">
+        <!-- Слой с градиентом (поверх картинки) -->
+        <div class="hero-overlay"></div>
+
+        <!-- Оптимизированная картинка -->
+        <picture>
+            <source 
+                media="(max-width: 768px)" 
+                type="image/avif" 
+                srcset="hero-mobile.avif"
+            >
+            
+            <!-- 3. Fallback для старых браузеров + атрибуты приоритета -->
+            <img 
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7-mWv22HwlrdWGj_Y6lWr2LLahL029Usk2l9ktryr_wyAW8k8VAzBsfA&s=10" 
+                alt="Главный баннер"
+                loading="eager"
+                fetchpriority="high"
+                width="1920"
+                height="1080"
+            >
+        </picture>
+    </div>
     
     <hr class="dashed-divider">
 
@@ -201,14 +233,71 @@
         </div>
     </dialog>
 
+    <hr class="dashed-divider">
+
+
+    <div class="dark-theme-container">
+        <h1>Демо CSS-переменных</h1>
+
+        <div class="card">
+            <h2>Карточка 1</h2>
+            <p>Этот текст использует переменную --text-secondary. При смене темы цвет меняется автоматически, без единой строки JS для этого элемента.</p>
+            <button class="btn">Кнопка действия</button>
+        </div>
+
+        <div class="card">
+            <h2>Карточка 2</h2>
+            <p>Обрати внимание на плавный переход цветов. Это работает благодаря transition на body и карточках. CSS сам анимирует изменение значений переменных.</p>
+        </div>
+
+        <div class="card">
+            <h2>Карточка 3</h2>
+            <p>Обнови страницу — тема сохранится. Закрой браузер и открой снова — тема всё ещё здесь. Это работает благодаря localStorage.</p>
+        </div>
+    </div>
+
+    <div id="bem-methodology">
+        <div class="card">
+            Кнопка:
+            <button class="card__button">
+                Тык
+            </button>
+        </div>
+    </div>
+
+    <ul id="task-list-event-delegation">
+        <li>Задача 1 <button class="delete-btn">Удалить</button></li>
+        <li>Задача 2 <button class="delete-btn">Удалить</button></li>
+        <!-- Динамически добавленные задачи тоже будут работать! -->
+    </ul>
+    <button id="add-task">Добавить задачу</button>
+
+
+    <div id="cart">
+    </div>
+    <p>Товаров в корзине: <span id="cart-count">0</span></p>
+    <button id="add-item">Добавить товар в корзину</button>
+
+
+    <div class="chat-container">
+        <div id="chat-box" class="chat-box">
+            <div class="message incoming">Привет! Как дела?</div>
+            <div class="message outgoing">Норм, пишу чат на ваниле 😎</div>
+        </div>
+
+        <button id="new-msg-btn" class="new-msg-btn hidden">↓ Новые сообщения</button>
+
+        <div class="controls">
+            <button id="send-btn">Эмулировать входящее сообщение</button>
+        </div>
+    </div>
+
     <footer>
         <div class="card">Блок 1</div>
         <div class="card">Блок 2</div>
         <div class="card">Блок 3</div>
         <div class="card">Блок 4</div>
     </footer>
-    
-
     <script src="script.js"></script>
 </body>
 </html>

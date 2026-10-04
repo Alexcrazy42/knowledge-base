@@ -139,16 +139,42 @@ h2 {
 }
 
 
-#hero-section {
+.hero-wrapper {
+    position: relative;
     min-height: 50vh;
     width: 70%;
-    margin: auto;
-    
-    background-image: 
-        linear-gradient(rgba(156, 137, 137, 0.6), rgba(174, 151, 151, 0.6)),
-        url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7-mWv22HwlrdWGj_Y6lWr2LLahL029Usk2l9ktryr_wyAW8k8VAzBsfA&s=10');
-    background-size: cover;
-    background-position: center;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        rgba(156, 137, 137, 0.6), 
+        rgba(174, 151, 151, 0.6)
+    );
+    z-index: 1;
+    pointer-events: none; /* Пропускает клики сквозь градиент к картинке/контенту */
+}
+
+.hero-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    z-index: 0;
+}
+
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 40px;
+    color: white;
 }
 
 #about {
@@ -446,4 +472,173 @@ dialog::backdrop {
 
 .popup-content {
   padding: 20px;
+}
+
+
+:root {
+    --bg-color: #edeef0;
+    --card-bg: #ffffff;
+    --text-color: #222222;
+    --text-secondary: #818c99;
+    --accent-color: #0077FF;
+    --border-color: #dce1e6;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+
+.dark-theme {
+    --bg-color: #141414;
+    --card-bg: #222222;
+    --text-color: #e1e3e6;
+    --text-secondary: #939cb0;
+    --accent-color: #71aaeb;
+    --border-color: #333333;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+
+
+.dark-theme-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 28px;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    transition: color 0.3s ease;
+}
+
+.btn {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease, background-color 0.3s ease;
+    margin-top: 12px;
+}
+
+.btn:hover {
+    opacity: 0.85;
+}
+
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.theme-toggle:hover {
+    transform: translateY(-2px);
+}
+
+
+/* 
+блок
+блок__элемент
+блок--модификатор
+блок__элемент--модификатор 
+*/
+#bem-methodology {
+    .card {
+        box-shadow: var(--shadow);
+        border-radius: 5px;
+        border: 1px solid red;
+        display: flex;
+        justify-content: center;
+    }
+
+    .card__button {
+        background-color: #0066dd;
+    }
+
+    .card__button--ready {
+        background-color: red;
+    }
+}
+
+
+/* a11y */
+
+/* aria-label — невидимая подпись
+<button aria-label="Закрыть окно">✕</button> */
+
+
+/* role — указывает роль элемента
+<div role="dialog" aria-modal="true">...</div> */
+
+/* 
+aria-expanded — состояние "открыто/закрыто"
+<button 
+    aria-expanded="false" 
+    aria-controls="dropdown-menu"
+    id="menu-trigger"
+>
+    Меню
+</button>
+
+<ul id="dropdown-menu" role="menu" hidden>
+    <li role="menuitem">Профиль</li>
+    <li role="menuitem">Настройки</li>
+</ul> */
+
+
+.chat-container { width: 500px; margin: 20px auto; font-family: sans-serif; position: relative; }
+.chat-box { 
+    height: 200px; 
+    overflow-y: auto; 
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    background: #f9f9f9;
+}
+
+.message { margin-bottom: 8px; padding: 8px; border-radius: 8px; max-width: 80%; }
+.incoming { background: #e0e0e0; align-self: flex-start; }
+.outgoing { background: #dcf8c6; margin-left: auto; }
+
+.new-msg-btn {
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    background: #007bff; color: white; border: none; padding: 8px 16px; 
+    border-radius: 20px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.hidden { 
+    display: none; 
 }
