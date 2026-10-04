@@ -1,0 +1,303 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>workshop</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        Хедер
+
+        <button class="theme-toggle" id="themeToggle">
+            <span id="themeIcon">🌙</span>
+            <span id="themeText">Темная тема</span>
+        </button>
+    </header>
+
+    <div id="block-vs-inline">
+        <div class="block">
+            <h1>Element1</h1>
+            <h2>Element2</h2>
+            <h3>Element3</h3>
+        </div>
+
+        <div class="inline">
+            <span>span1</span1>
+            <span>span2</span1>
+            <span>span3</span1>
+        </div>
+    </div>
+
+    <hr class="dashed-divider">
+
+    <div id="adaptive">
+        <header class="header">
+            <div class="logo">MyBrand</div>
+            <nav class="nav">
+                <a href="#">Главная</a>
+                <a href="#">О нас</a>
+                <a href="#">Контакты</a>
+            </nav>
+        </header>
+
+        <main class="container">
+            <h1>Наши товары</h1>
+            
+            <div class="grid">
+                <!-- Карточка 1 -->
+                <article class="card">
+                    <div class="card-img"></div>
+                    <div class="card-content">
+                        <h3>Супер Гаджет</h3>
+                        <p>Описание товара, которое может быть длинным или коротким.</p>
+                        <button>Купить</button>
+                    </div>
+                </article>
+
+                <!-- Карточка 2 -->
+                <article class="card">
+                    <div class="card-img"></div>
+                    <div class="card-content">
+                        <h3>Мега Устройство</h3>
+                        <p>Еще один отличный продукт для ваших нужд.</p>
+                        <button>Купить</button>
+                    </div>
+                </article>
+
+                <!-- Карточка 3 -->
+                <article class="card">
+                    <div class="card-img"></div>
+                    <div class="card-content">
+                        <h3>Ультра Прибор</h3>
+                        <p>Технологии будущего уже здесь.</p>
+                        <button>Купить</button>
+                    </div>
+                </article>
+            </div>
+        </main>
+    </div>
+
+    <hr class="dashed-divider">
+
+
+
+    <!-- Заменили background-image на <picture> + <img>. Браузер теперь видит картинку сразу при чтении HTML, а не ждет загрузки CSS. Это резко ускоряет метрику LCP (время отрисовки главного контента). 
+        
+    Добавили высший приоритет загрузки: атрибуты loading="eager" и fetchpriority="high" заставляют браузер качать эту картинку в первую очередь, опережая скрипты и шрифты.    
+    -->
+    <div class="hero-wrapper">
+        <!-- Слой с градиентом (поверх картинки) -->
+        <div class="hero-overlay"></div>
+
+        <!-- Оптимизированная картинка -->
+        <picture>
+            <source 
+                media="(max-width: 768px)" 
+                type="image/avif" 
+                srcset="hero-mobile.avif"
+            >
+            
+            <!-- 3. Fallback для старых браузеров + атрибуты приоритета -->
+            <img 
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7-mWv22HwlrdWGj_Y6lWr2LLahL029Usk2l9ktryr_wyAW8k8VAzBsfA&s=10" 
+                alt="Главный баннер"
+                loading="eager"
+                fetchpriority="high"
+                width="1920"
+                height="1080"
+            >
+        </picture>
+    </div>
+    
+    <hr class="dashed-divider">
+
+    <div id="about">
+        <div>
+            Бла бла бла
+        </div>
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7-mWv22HwlrdWGj_Y6lWr2LLahL029Usk2l9ktryr_wyAW8k8VAzBsfA&s=10" alt="О нас">
+    </div>
+
+    <hr class="dashed-divider">
+
+    <div id="form">
+        <form class="registration-form">
+            <h2>Создание аккаунта</h2>
+            
+            <div class="field">
+                <label for="username">Имя пользователя</label>
+                <input type="text" id="username" name="username" 
+                    placeholder="ivan_mamedov" required minlength="3" maxlength="20" />
+            </div>
+
+            <div class="field">
+                <label for="email">Электронная почта</label>
+                <input type="email" id="email" name="email" 
+                    placeholder="example@mail.ru" required autocomplete="email" />
+            </div>
+
+            <div class="field">
+                <label for="phone">Телефон</label>
+                <input type="tel" id="phone" name="phone" 
+                    placeholder="+7 (999) 000-00-00" 
+                    pattern="[+]?[0-9\s\-\(\)]{10,20}" 
+                    title="Формат: +7 (999) 000-00-00" required />
+            </div>
+
+            <div class="field">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" 
+                    minlength="8" required autocomplete="new-password" />
+                <small class="hint">Минимум 8 символов</small>
+            </div>
+
+            <div class="field">
+                <label for="age">Возраст</label>
+                <input type="number" id="age" name="age" 
+                    min="14" max="120" step="1" placeholder="18" />
+            </div>
+
+            <div class="field">
+                <label for="birthdate">Дата рождения</label>
+                <input type="date" id="birthdate" name="birthdate" />
+            </div>
+
+            <div class="field">
+                <label for="city">Город</label>
+                <select id="city" name="city" required>
+                    <option value="" disabled selected>Выберите город</option>
+                    <option value="spb">Санкт-Петербург</option>
+                    <option value="msk">Москва</option>
+                    <option value="other">Другой</option>
+                </select>
+            </div>
+
+            <div class="field file-field">
+                <label for="avatar">Аватарка</label>
+                <input type="file" id="avatar" name="avatar" accept="image/png,image/jpeg" />
+                <span class="file-name">Файл не выбран</span>
+            </div>
+
+            <div class="field checkbox-field">
+                <input type="checkbox" id="terms" name="terms" />
+                <label for="terms">Я согласен с правилами сервиса</label>
+            </div>
+
+            <button type="submit" class="submit-btn">Зарегистрироваться</button>
+        </form>
+    </div>
+
+    <hr class="dashed-divider">
+
+
+    <form class="multi-col-form">
+        <div class="form-field full-width">
+            <label for="username">Имя пользователя</label>
+            <input type="text" id="username" required />
+        </div>
+
+        <div class="form-field">
+            <label for="email">Электронная почта</label>
+            <input type="email" id="email" required />
+        </div>
+        
+        <div class="form-field">
+            <label for="phone">Телефон</label>
+            <input type="tel" id="phone" />
+        </div>
+
+        <!-- Три колонки: День, Месяц, Год -->
+        <div class="form-field">
+            <label for="day">День</label>
+            <input type="number" id="day" min="1" max="31" />
+        </div>
+        <div class="form-field">
+            <label for="month">Месяц</label>
+            <select id="month">...</select>
+        </div>
+        <div class="form-field">
+            <label for="year">Год</label>
+            <input type="number" id="year" min="1900" max="2026" />
+        </div>
+
+        <button type="submit" class="full-width">Отправить</button>
+    </form>
+
+    <dialog id="my-popup">
+        <div class="popup-content">
+            <h2>Заголовок окна</h2>
+            <p>Это текст внутри всплывающего окна.</p>
+            <button id="close-btn">Закрыть</button>
+        </div>
+    </dialog>
+
+    <hr class="dashed-divider">
+
+
+    <div class="dark-theme-container">
+        <h1>Демо CSS-переменных</h1>
+
+        <div class="card">
+            <h2>Карточка 1</h2>
+            <p>Этот текст использует переменную --text-secondary. При смене темы цвет меняется автоматически, без единой строки JS для этого элемента.</p>
+            <button class="btn">Кнопка действия</button>
+        </div>
+
+        <div class="card">
+            <h2>Карточка 2</h2>
+            <p>Обрати внимание на плавный переход цветов. Это работает благодаря transition на body и карточках. CSS сам анимирует изменение значений переменных.</p>
+        </div>
+
+        <div class="card">
+            <h2>Карточка 3</h2>
+            <p>Обнови страницу — тема сохранится. Закрой браузер и открой снова — тема всё ещё здесь. Это работает благодаря localStorage.</p>
+        </div>
+    </div>
+
+    <div id="bem-methodology">
+        <div class="card">
+            Кнопка:
+            <button class="card__button">
+                Тык
+            </button>
+        </div>
+    </div>
+
+    <ul id="task-list-event-delegation">
+        <li>Задача 1 <button class="delete-btn">Удалить</button></li>
+        <li>Задача 2 <button class="delete-btn">Удалить</button></li>
+        <!-- Динамически добавленные задачи тоже будут работать! -->
+    </ul>
+    <button id="add-task">Добавить задачу</button>
+
+
+    <div id="cart">
+    </div>
+    <p>Товаров в корзине: <span id="cart-count">0</span></p>
+    <button id="add-item">Добавить товар в корзину</button>
+
+
+    <div class="chat-container">
+        <div id="chat-box" class="chat-box">
+            <div class="message incoming">Привет! Как дела?</div>
+            <div class="message outgoing">Норм, пишу чат на ваниле 😎</div>
+        </div>
+
+        <button id="new-msg-btn" class="new-msg-btn hidden">↓ Новые сообщения</button>
+
+        <div class="controls">
+            <button id="send-btn">Эмулировать входящее сообщение</button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="card">Блок 1</div>
+        <div class="card">Блок 2</div>
+        <div class="card">Блок 3</div>
+        <div class="card">Блок 4</div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
