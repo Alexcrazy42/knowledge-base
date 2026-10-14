@@ -1,0 +1,237 @@
+﻿/* Input.module.css - уже есть у нас */
+.wrapper {
+  --input-height: 40px;
+  --input-padding-x: 12px;
+  --input-border-color: #d9d9d9;
+  --input-border-radius: 6px;
+  --input-bg: #ffffff;
+  --input-text-color: #333333;
+  --input-placeholder-color: #bfbfbf;
+  --input-focus-color: #1890ff;
+  --input-error-color: #ff4d4f;
+  --input-disabled-bg: #f5f5f5;
+  --input-transition: all 0.2s ease;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--input-height);
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border-color);
+  border-radius: var(--input-border-radius);
+  transition: var(--input-transition);
+  box-sizing: border-box;
+}
+
+.wrapper:focus-within {
+  border-color: var(--input-focus-color);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.wrapper.has-error {
+  border-color: var(--input-error-color);
+}
+
+.wrapper.is-disabled {
+  background-color: var(--input-disabled-bg);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.field {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: var(--input-padding-y, 8px) var(--input-padding-x);
+  border: none;
+  background: transparent;
+  color: var(--input-text-color);
+  font-size: inherit;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.field::placeholder {
+  color: var(--input-placeholder-color);
+}
+
+/* MaskedInput.module.css */
+
+/* ============================================
+   1. НАСЛЕДУЕМ БАЗОВЫЕ СТИЛИ
+   ============================================ */
+.wrapper {
+  /* Те же переменные, что и у Input */
+  --input-height: 40px;
+  --input-padding-x: 12px;
+  --input-border-color: #d9d9d9;
+  --input-border-radius: 6px;
+  --input-bg: #ffffff;
+  --input-text-color: #333333;
+  --input-placeholder-color: #bfbfbf;
+  --input-focus-color: #1890ff;
+  --input-error-color: #ff4d4f;
+  --input-disabled-bg: #f5f5f5;
+  --input-transition: all 0.2s ease;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--input-height);
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border-color);
+  border-radius: var(--input-border-radius);
+  transition: var(--input-transition);
+  box-sizing: border-box;
+}
+
+.wrapper:focus-within {
+  border-color: var(--input-focus-color);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.wrapper.has-error {
+  border-color: var(--input-error-color);
+}
+
+.wrapper.is-disabled {
+  background-color: var(--input-disabled-bg);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ============================================
+   2. СПЕЦИФИКА МАСКИРОВАННОГО ВВОДА
+   ============================================ */
+
+/* Моноширинный шрифт для цифр (чтобы символы не "прыгали") */
+.field {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 8px var(--input-padding-x);
+  border: none;
+  background: transparent;
+  color: var(--input-text-color);
+  font-size: 14px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 
+               'Source Code Pro', monospace; /* Моноширинный шрифт */
+  letter-spacing: 0.5px; /* Немного увеличиваем межбуквенное расстояние */
+  outline: none;
+  box-sizing: border-box;
+}
+
+.field::placeholder {
+  color: var(--input-placeholder-color);
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+/* ============================================
+   3. ВИЗУАЛЬНАЯ ПОДСКАЗКА МАСКИ (Продвинутая фича)
+   ============================================ */
+
+/* Показываем незаполненную часть маски серым цветом */
+.field[data-mask-partial="true"] {
+  /* Этот атрибут можно добавлять через JS, когда маска заполнена частично */
+  background-image: linear-gradient(
+    to right,
+    var(--input-text-color) 0%,
+    var(--input-text-color) var(--mask-fill-percent, 0%),
+    var(--input-placeholder-color) var(--mask-fill-percent, 0%),
+    var(--input-placeholder-color) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ============================================
+   4. ИКОНКА ТЕЛЕФОНА (Опционально)
+   ============================================ */
+
+.icon {
+  display: flex;
+  align-items: center;
+  padding-left: var(--input-padding-x);
+  color: #999999;
+  pointer-events: none;
+}
+
+.field:has(~ .icon) {
+  padding-left: 0;
+}
+
+/* ============================================
+   5. СЧЕТЧИК СИМВОЛОВ (Для длинных масок)
+   ============================================ */
+
+.counter {
+  position: absolute;
+  right: var(--input-padding-x);
+  bottom: -20px;
+  font-size: 12px;
+  color: #999999;
+}
+
+.counter.has-error {
+  color: var(--input-error-color);
+}
+
+/* ============================================
+   6. АНИМАЦИЯ ПОЯВЛЕНИЯ МАСКИ
+   ============================================ */
+
+@keyframes maskFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.field:not(:placeholder-shown) {
+  animation: maskFadeIn 0.2s ease-out;
+}
+
+/* ============================================
+   7. АДАПТИВНОСТЬ
+   ============================================ */
+
+@media (max-width: 768px) {
+  .wrapper {
+    --input-height: 44px; /* Увеличиваем для тач-устройств */
+    font-size: 16px; /* Предотвращаем зум iOS */
+  }
+
+  .field {
+    font-size: 16px;
+    letter-spacing: 0.3px;
+  }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+  .wrapper {
+    --input-bg: #1f1f1f;
+    --input-border-color: #434343;
+    --input-text-color: #ffffff;
+    --input-placeholder-color: #8c8c8c;
+    --input-disabled-bg: #2a2a2a;
+  }
+}
+
+/* Уменьшенные анимации для пользователей с соответствующими настройками */
+@media (prefers-reduced-motion: reduce) {
+  .wrapper,
+  .field {
+    animation: none;
+    transition: none;
+  }
+}

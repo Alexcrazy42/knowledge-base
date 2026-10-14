@@ -1,0 +1,163 @@
+﻿.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  
+  border: 1px solid transparent;
+  border-radius: 6px;
+  
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.5;
+  
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap; /* Запрещаем перенос текста */
+  
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+/* Убираем стандартные отступы браузера для button */
+.button::-moz-focus-inner {
+  border: 0;
+}
+
+
+.size-small {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.size-medium {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.size-large {
+  height: 48px;
+  padding: 0 24px;
+  font-size: 16px;
+}
+
+/* ============================================
+   3. ВАРИАНТЫ (Variants)
+   ============================================ */
+
+/* --- Primary (Синяя) --- */
+.variant-primary {
+  background-color: #1890ff;
+  color: #ffffff;
+}
+
+.variant-primary:hover:not(.is-disabled):not(.is-loading) {
+  background-color: #40a9ff;
+}
+
+.variant-primary:active:not(.is-disabled):not(.is-loading) {
+  background-color: #096dd9;
+}
+
+/* --- Secondary (Белая с рамкой) --- */
+.variant-secondary {
+  background-color: #ffffff;
+  border-color: #d9d9d9;
+  color: #333333;
+}
+
+.variant-secondary:hover:not(.is-disabled):not(.is-loading) {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.variant-secondary:active:not(.is-disabled):not(.is-loading) {
+  border-color: #096dd9;
+  color: #096dd9;
+}
+
+/* --- Danger (Красная) --- */
+.variant-danger {
+  background-color: #ff4d4f;
+  color: #ffffff;
+}
+
+.variant-danger:hover:not(.is-disabled):not(.is-loading) {
+  background-color: #ff7875;
+}
+
+.variant-danger:active:not(.is-disabled):not(.is-loading) {
+  background-color: #d9363e;
+}
+
+/* ============================================
+   4. СОСТОЯНИЯ (States)
+   ============================================ */
+
+/* Disabled (Отключена) */
+.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  /* pointer-events: none;  Раскомментируйте, если хотите полностью заблокировать клики и тултипы */
+}
+
+/* Loading (Загрузка) */
+.is-loading {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+/* ============================================
+   5. ВНУТРЕННИЕ ЭЛЕМЕНТЫ (Internal Elements)
+   ============================================ */
+
+/* Иконка */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1em; /* Наследует размер шрифта кнопки */
+}
+
+/* Текст */
+.text {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Спиннер (Загрузка) */
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.2em;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   6. ДОСТУПНОСТЬ (Accessibility / Focus)
+   ============================================ */
+
+/* Красивый фокус только при навигации с клавиатуры */
+.button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.3);
+}
+
+/* Для Danger кнопки меняем цвет фокуса */
+.variant-danger:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.3);
+}
+
+/* Убираем фокус при клике мышкой (чтобы не было синей рамки) */
+.button:focus:not(:focus-visible) {
+  box-shadow: none;
+}
