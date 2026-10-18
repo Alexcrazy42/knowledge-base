@@ -1,18 +1,26 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Input from './components/Input/Input'
 import Button from './components/Button/Button';
 import Select from './components/Select/Select';
 import MaskedInput from './components/MaskedInput/MaskedInput';
 import Form from './components/Form/Form';
+import { DatePicker } from './components/DatePicker/DatePicker';
+import { Search } from './components/Search/Search';
+import { Tab, Tabs } from './components/Tab/Tabs';
+import { Accordion } from './components/Accordion/Accordion';
+import UsersList from './components/Pagination/UsersList';
+import { UploadProgress } from './components/Progress/UploadProgress';
+import { BasicTooltip } from './components/Tooltip/BasicTooltip';
 
 function App() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [delivery, setDelivery] = useState('');
   const [count, setCount] = useState<number>(100);
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState([]);
   const [role, setRole] = useState('');
   const [card, setCard] = useState('');
   const [phone, setPhone] = useState('');
+  const [activeTab, setActiveTab] = useState('tab1');
 
   const handleReset = () => {
     inputRef.current?.focus();
@@ -101,6 +109,7 @@ function App() {
     </Button>
 
     <Select
+      multiple
       label="Страна"
       placeholder="Выберите страну"
       value={country}
@@ -118,7 +127,7 @@ function App() {
       label="Роль"
       value={role}
       onChange={setRole}
-      error="Роль обязательна"
+      error={role=='' ? 'Роль обязательна' : null}
       options={[
         { value: 'admin', label: 'Администратор' },
         { value: 'editor', label: 'Редактор' },
@@ -131,7 +140,7 @@ function App() {
       label="Роль"
       value={role}
       onChange={setRole}
-      error="Роль обязательна"
+      error={role=='' ? 'Роль обязательна' : null}
       options={[
       ]}
     />
@@ -153,8 +162,109 @@ function App() {
     />
 
     <Form />
+
+    <DatePicker
+      onDateSelected={(date) => console.log(date)}
+    />
+
+    <Search
+      label="Поиск пользователей"
+      searchFn={(query: string): Promise<User[]> => {
+        console.log(`Вызыватся поиск с параметром ${query}`)
+        const filtered = users.filter(user => 
+          user.name.toLowerCase().includes(query.toLowerCase())
+        );
+        return Promise.resolve(filtered);
+      }}
+      onSelect={(item: User): void => {
+        console.log('Выбран пользователь:', item);
+      }}
+      render={(item: User): ReactNode => {
+        return (
+          <div>
+            <strong>{item.name}</strong>
+            <span> ({item.email})</span>
+          </div>
+        );
+      }}
+    />
+
+    <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+      <h2>Пример компонента Tabs</h2>
+      
+      <Tabs 
+        activeKey={activeTab} 
+        onChange={setActiveTab}
+      >
+        <Tab id="tab1" label="Профиль">
+          <div>
+            <h3>Информация о профиле</h3>
+            <p>Здесь находится контент первой вкладки.</p>
+            <input placeholder="Это поле сохранит состояние при переключении вкладок!" />
+          </div>
+        </Tab>
+
+        <Tab id="tab2" label="Настройки">
+          <div>
+            <h3>Настройки аккаунта</h3>
+            <p>Контент второй вкладки.</p>
+          </div>
+        </Tab>
+
+        <Tab id="tab3" label="Уведомления" disabled>
+          <div>
+            <h3>Уведомления</h3>
+            <p>Этот текст не отобразится, так как вкладка disabled.</p>
+          </div>
+        </Tab>
+
+        <Tab id="tab4" label={<span>🔥 <b>Премиум</b></span>}>
+          <div>
+            <h3>Премиум функции</h3>
+            <p>В label можно передавать любые ReactNode, включая иконки и JSX.</p>
+          </div>
+        </Tab>
+      </Tabs>
+
+      <div style={{ marginTop: '2rem', padding: '1rem', background: '#f5f5f5', borderRadius: '8px' }}>
+        <strong>Текущая активная вкладка (из стейта родителя):</strong> {activeTab}
+      </div>
+    </div>
+
+
+    <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '0 1rem' }}>
+        <h2>Часто задаваемые вопросы</h2>
+        
+        <Accordion
+            headerContent="Что такое React?"
+            content={
+                <p>
+                    React — это JavaScript-библиотека для создания пользовательских интерфейсов.
+                    Она была разработана Facebook и используется для создания одностраничных приложений.
+                </p>
+            }
+        />
+    </div>
+
+    <UsersList />
+
+    <UploadProgress />
+
+    <BasicTooltip />
     </>
   )
 }   
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const users: User[] = [
+  { id: 1, name: 'Иван Петров', email: 'ivan@example.com' },
+  { id: 2, name: 'Мария Сидорова', email: 'maria@example.com' },
+  { id: 3, name: 'Алексей Иванов', email: 'alexey@example.com' },
+];
 
 export default App

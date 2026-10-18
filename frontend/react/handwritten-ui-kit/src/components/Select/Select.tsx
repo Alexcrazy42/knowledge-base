@@ -7,10 +7,8 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-interface SelectProps {
+interface BaseSelectProps {
   options: SelectOption[];
-  value?: string;
-  onChange?: (value: string) => void;
   placeholder?: string;
   label?: string;
   error?: string;
@@ -18,6 +16,20 @@ interface SelectProps {
   size?: 'small' | 'medium' | 'large';
   className?: string;
 }
+
+interface SingleSelectProps extends BaseSelectProps {
+  multiple?: false;
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+interface MultiSelectProps extends BaseSelectProps {
+  multiple: true;
+  value?: string[];
+  onChange?: (value: string[]) => void;
+}
+
+type SelectProps = SingleSelectProps | MultiSelectProps;
 
 const Select = forwardRef<HTMLDivElement, SelectProps>(
   (
@@ -31,6 +43,7 @@ const Select = forwardRef<HTMLDivElement, SelectProps>(
       disabled = false,
       size = 'medium',
       className,
+      multiple
     },
     ref
   ) => {
@@ -40,7 +53,11 @@ const Select = forwardRef<HTMLDivElement, SelectProps>(
     const dropdownRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
 
-    const selectedOption = options.find((opt) => opt.value === value);
+    const selectedValues: string[] = multiple
+      ? (Array.isArray(value) ? value : [])
+      : (value ? [value] : []);
+
+    const selectedOptions = options.filter((opt) => selectedValues.includes(opt.value));
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -51,6 +68,16 @@ const Select = forwardRef<HTMLDivElement, SelectProps>(
         setActiveIndex(-1);
       }
     };
+
+    const handleRemoveChip = useCallback(
+      (optionValue: string) => {
+        if (multiple && Array.isArray(value)) {
+          const newValues = value.filter((v) => v !== optionValue);
+          (onChange as (value: string[]) => void)?.(newValues);
+        }
+      },
+      [multiple, value, onChange]
+    );
 
     useEffect(() => {
       if (isOpen) {
@@ -79,12 +106,27 @@ const Select = forwardRef<HTMLDivElement, SelectProps>(
 
     const handleSelect = useCallback(
       (optionValue: string) => {
-        onChange?.(optionValue);
-        setIsOpen(false);
-        setActiveIndex(-1);
-        triggerRef.current?.focus();
+        if (multiple) {
+          const currentValues = Array.isArray(value) ? value : [];
+          
+          const isSelected = currentValues.includes(optionValue);
+          
+          const newValues = isSelected
+            ? currentValues.filter((v) => v !== optionValue)
+            : [...currentValues, optionValue];
+
+          (onChange as (value: string[]) => void)?.(newValues);
+        } else {
+          // Одиночный выбор
+          (onChange as (value: string) => void)?.(optionValue);
+          
+          // Закрываем и возвращаем фокус только для одиночного выбора
+          setIsOpen(false);
+          setActiveIndex(-1);
+          triggerRef.current?.focus();
+        }
       },
-      [onChange]
+      [multiple, value, onChange] 
     );
 
     const handleKeyDown = useCallback(
@@ -177,10 +219,38 @@ const Select = forwardRef<HTMLDivElement, SelectProps>(
           >
             <span
               className={`${styles.triggerText} ${
-                !selectedOption ? styles.placeholder : ''
+                selectedOptions.length==0 ? styles.placeholder : ''
               }`}
             >
-              {selectedOption ? selectedOption.label : placeholder}
+              <span className={styles.triggerText}>
+                {multiple ? (
+                  // Режим мультиселекта: чипсы
+                  selectedOptions.length > 0 ? (
+                    <div className={styles.chipsContainer}>
+                      {selectedOptions.map((opt) => (
+                        <span key={opt.value} className={styles.chip}>
+                          {opt.label}
+                          <button
+                            type="button"
+                            className={styles.chipRemove}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Важно! Чтобы не сработал onClick триггера
+                              handleRemoveChip(opt.value);
+                            }}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    placeholder
+                  )
+                ) : (
+                  // Режим одиночного селекта: просто текст
+                  selectedOptions.length > 0 ? selectedOptions[0].label : placeholder
+                )}
+              </span>
             </span>
             <span className={styles.arrow}>
               <svg
@@ -207,7 +277,7 @@ const Select = forwardRef<HTMLDivElement, SelectProps>(
               className={styles.dropdown}
             >
               {options.map((option, index) => {
-                const isSelected = option.value === value;
+                const isSelected = multiple ? value.includes(option.value) : option.value == value;
                 const isActive = index === activeIndex;
 
                 const optionClasses = [
@@ -233,7 +303,6 @@ const Select = forwardRef<HTMLDivElement, SelectProps>(
                       }
                     }}
                     onMouseEnter={() => {
-                      console.log(`mouse enter, active enter: ${index}`)
                       if (!option.disabled) {
                         setActiveIndex(index);
                       }

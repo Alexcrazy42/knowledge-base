@@ -1,31 +1,9 @@
-﻿import type { ReactNode } from 'react';
-import { getValueFromEvent } from './useForm';
+﻿import { getValueFromEvent } from './useForm';
 import type {
-  Control,
-  FieldState,
-  FieldValues,
-  RegisterOptions,
+  ControllerField,
+  ControllerProps,
+  FieldValues
 } from './types';
-
-interface ControllerField<T extends FieldValues, K extends keyof T> {
-  name: string;
-  value: T[K];
-  onChange: (value: unknown) => void;
-  onBlur: () => void;
-  ref: (instance: unknown) => void;
-}
-
-interface ControllerRenderProps<T extends FieldValues, K extends keyof T> {
-  field: ControllerField<T, K>;
-  fieldState: FieldState;
-}
-
-interface ControllerProps<T extends FieldValues, K extends keyof T> {
-  name: K;
-  control: Control<T>;
-  rules?: RegisterOptions;
-  render: (props: ControllerRenderProps<T, K>) => ReactNode;
-}
 
 export function Controller<T extends FieldValues, K extends keyof T>({
   name,

@@ -1,0 +1,88 @@
+﻿.tabsContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.header {
+  display: flex;
+  border-bottom: 2px solid #f0f0f0;
+  gap: 24px;
+}
+
+.tabButton {
+  position: relative;
+  padding: 12px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px; /* Чтобы перекрыть border-bottom у header */
+  
+  font-size: 14px;
+  font-weight: 500;
+  color: #8c8c8c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.tabButton:hover:not(.disabled) {
+  color: #1890ff;
+}
+
+.tabButton.active {
+  color: #1890ff;
+  border-bottom-color: #1890ff;
+}
+
+.tabButton:focus-visible {
+  color: #1890ff;
+  border-bottom-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-radius: 4px 4px 0 0;
+}
+
+.tabButton.disabled {
+  color: #d9d9d9;
+  cursor: not-allowed;
+}
+
+.content {
+  padding: 16px 0;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .header {
+    border-bottom-color: #303030;
+  }
+  
+  .tabButton {
+    color: #8c8c8c;
+  }
+  
+  .tabButton:hover:not(.disabled) {
+    color: #40a9ff;
+  }
+  
+  .tabButton.active {
+    color: #40a9ff;
+    border-bottom-color: #40a9ff;
+  }
+  
+  .tabButton.disabled {
+    color: #434343;
+  }
+}

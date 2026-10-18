@@ -1,4 +1,4 @@
-﻿import type { FormEvent } from 'react';
+﻿import type { FormEvent, ReactNode } from 'react';
 
 export type FieldValues = Record<string, unknown>;
 
@@ -71,4 +71,28 @@ export interface UseFormReturn<T extends FieldValues> {
   ) => void;
   reset: (values?: Partial<T>) => void;
   watch: (name?: keyof T) => unknown;
+}
+
+
+
+// uncontrolled elements
+
+export interface ControllerField<T extends FieldValues, K extends keyof T> {
+  name: string;
+  value: T[K];
+  onChange: (value: unknown) => void;
+  onBlur: () => void;
+  ref: (instance: unknown) => void;
+}
+
+export interface ControllerRenderProps<T extends FieldValues, K extends keyof T> {
+  field: ControllerField<T, K>;
+  fieldState: FieldState;
+}
+
+export interface ControllerProps<T extends FieldValues, K extends keyof T> {
+  name: K;
+  control: Control<T>;
+  rules?: RegisterOptions;
+  render: (props: ControllerRenderProps<T, K>) => ReactNode;
 }
