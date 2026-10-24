@@ -1,0 +1,203 @@
+﻿.trigger {
+  display: inline-block;
+}
+
+.popover {
+  position: fixed;
+  z-index: 1000;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08),
+              0 3px 6px -4px rgba(0, 0, 0, 0.12),
+              0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.06);
+  transform: rotate(45deg);
+}
+
+.top .arrow,
+.top-start .arrow,
+.top-end .arrow {
+  bottom: -6px;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.bottom .arrow,
+.bottom-start .arrow,
+.bottom-end .arrow {
+  top: -6px;
+  box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.left .arrow,
+.left-start .arrow,
+.left-end .arrow {
+  right: -6px;
+  box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.right .arrow,
+.right-start .arrow,
+.right-end .arrow {
+  left: -6px;
+  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.top .arrow,
+.bottom .arrow {
+  left: 50%;
+  margin-left: -6px;
+}
+
+.top-start .arrow,
+.bottom-start .arrow {
+  left: 16px;
+}
+
+.top-end .arrow,
+.bottom-end .arrow {
+  right: 16px;
+}
+
+.left .arrow,
+.right .arrow {
+  top: 50%;
+  margin-top: -6px;
+}
+
+.left-start .arrow,
+.right-start .arrow {
+  top: 16px;
+}
+
+.left-end .arrow,
+.right-end .arrow {
+  bottom: 16px;
+}
+
+.title {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.content {
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #595959;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.cancelButton,
+.okButton {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background: #ffffff;
+  border-color: #d9d9d9;
+  color: #595959;
+}
+
+.cancelButton:hover:not(:disabled) {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.okButton {
+  background: #1890ff;
+  color: #ffffff;
+}
+
+.okButton:hover:not(:disabled) {
+  background: #40a9ff;
+}
+
+.cancelButton:disabled,
+.okButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .popover {
+    background: #1f1f1f;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+  
+  .arrow {
+    background: #1f1f1f;
+  }
+  
+  .title {
+    color: #ffffff;
+    border-bottom-color: #303030;
+  }
+  
+  .content {
+    color: #bfbfbf;
+  }
+  
+  .actions {
+    border-top-color: #303030;
+  }
+  
+  .cancelButton {
+    background: #1f1f1f;
+    border-color: #434343;
+    color: #ffffff;
+  }
+  
+  .cancelButton:hover:not(:disabled) {
+    border-color: #40a9ff;
+    color: #40a9ff;
+  }
+  
+  .okButton {
+    background: #40a9ff;
+  }
+  
+  .okButton:hover:not(:disabled) {
+    background: #69c0ff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover {
+    animation: none;
+  }
+}

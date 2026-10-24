@@ -21,7 +21,7 @@ export function UploadProgress() {
   return (
     <div style={{ maxWidth: '400px', margin: '2rem auto' }}>
       <h3>Загрузка файла...</h3>
-      <Progress progress={progress} />
+      <Progress progress={progress} showLabel={true} />
     </div>
   );
 }

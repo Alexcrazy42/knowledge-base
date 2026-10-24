@@ -1,0 +1,20 @@
+﻿.header {
+  width: 100%;
+  background: #ffffff;
+  z-index: 1000;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+}
+
+.shadowOnSticky {
+  /* Тень появляется автоматически благодаря position: sticky */
+  /* Когда header прилипает, он получает тень */
+}
+
+.sticky:has(+ *) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}

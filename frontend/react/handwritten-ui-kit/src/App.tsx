@@ -11,6 +11,13 @@ import { Accordion } from './components/Accordion/Accordion';
 import UsersList from './components/Pagination/UsersList';
 import { UploadProgress } from './components/Progress/UploadProgress';
 import { BasicTooltip } from './components/Tooltip/BasicTooltip';
+import { Popover } from './components/Popover/Popover';
+import { Breadcrumbs } from './components/Breadcrumbs/Breadcrumbs';
+import { BasicSkeleton } from './components/Skeleton/BasicSkeleton';
+import { LeftSidebar } from './components/Sidebar/LeftSidebar';
+import { FormSidebar } from './components/Sidebar/FormSidebar';
+import { SimpleHeaderExample } from './components/StickyHeader/SimpleHeaderExample';
+import { MyToastComponent } from './components/Toast/MyToast';
 
 function App() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -251,6 +258,37 @@ function App() {
     <UploadProgress />
 
     <BasicTooltip />
+
+    <Popover
+      content={
+        <div>
+          <p>Привет! Это простой popover.</p>
+        </div>
+      }
+      placement="right"
+    >
+      <button>Открыть popover</button>
+    </Popover>
+
+
+    <Breadcrumbs
+      items={[
+        { label: 'Главная', href: '/' },
+        { label: 'Каталог', href: '/catalog' },
+        { label: 'Электроника', href: '/catalog/electronics' },
+        { label: 'Смартфоны' }
+      ]}
+    />
+
+    <BasicSkeleton />
+
+    <LeftSidebar />
+
+    <FormSidebar />
+
+    <SimpleHeaderExample />
+
+    <MyToastComponent />
     </>
   )
 }   
