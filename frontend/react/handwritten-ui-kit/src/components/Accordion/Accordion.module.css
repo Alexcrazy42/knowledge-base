@@ -1,0 +1,150 @@
+﻿.accordion {
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    background: #ffffff;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.accordion:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.accordion.open {
+    border-color: #1890ff;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: inherit;
+    outline: none;
+}
+
+.header:hover {
+    background: #fafafa;
+}
+
+.header:focus-visible {
+    background: #f0f0f0;
+    box-shadow: inset 0 0 0 2px #1890ff;
+}
+
+.headerContent {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+    color: #262626;
+    line-height: 1.5;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 12px;
+    color: #8c8c8c;
+    transition: transform 0.3s ease;
+}
+
+.open .icon {
+    transform: rotate(180deg);
+    color: #1890ff;
+}
+
+.content {
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+}
+
+.contentInner {
+    padding: 0 20px 20px 20px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #595959;
+}
+
+.hidden {
+    max-height: 0;
+    opacity: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .accordion {
+        background: #1f1f1f;
+        border-color: #303030;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .accordion:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .accordion.open {
+        border-color: #40a9ff;
+        box-shadow: 0 4px 12px rgba(64, 169, 255, 0.2);
+    }
+
+    .header:hover {
+        background: #2a2a2a;
+    }
+
+    .header:focus-visible {
+        background: #333333;
+        box-shadow: inset 0 0 0 2px #40a9ff;
+    }
+
+    .headerContent {
+        color: #ffffff;
+    }
+
+    .icon {
+        color: #8c8c8c;
+    }
+
+    .open .icon {
+        color: #40a9ff;
+    }
+
+    .contentInner {
+        color: #bfbfbf;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 14px 16px;
+    }
+
+    .headerContent {
+        font-size: 14px;
+    }
+
+    .contentInner {
+        padding: 0 16px 16px 16px;
+        font-size: 13px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .accordion,
+    .header,
+    .icon,
+    .content {
+        transition: none;
+    }
+}

@@ -1,0 +1,105 @@
+﻿.container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.track {
+  flex: 1;
+  background: #f0f0f0;
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.blue {
+  background: linear-gradient(90deg, #1890ff, #40a9ff);
+}
+
+.green {
+  background: linear-gradient(90deg, #52c41a, #73d13d);
+}
+
+.red {
+  background: linear-gradient(90deg, #ff4d4f, #ff7875);
+}
+
+.orange {
+  background: linear-gradient(90deg, #faad14, #ffc53d);
+}
+
+.small .track {
+  height: 6px;
+}
+
+.medium .track {
+  height: 10px;
+}
+
+.large .track {
+  height: 14px;
+}
+
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  min-width: 40px;
+  text-align: right;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  .track {
+    background: #2a2a2a;
+  }
+
+  .label {
+    color: #ffffff;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    transition: none;
+  }
+
+  .fill::after {
+    animation: none;
+  }
+}
