@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quartz Dispatch Board</title>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="quartz">
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">QZ</span>
+        <div>
+          <p class="eyebrow">Dispatch board / 02</p>
+          <h1>Quartz</h1>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="status" id="connection-status"><span class="dot"></span><span id="connection-label">connecting</span></span>
+        <a class="ghost-link" href="/quartz-api/schedulers" target="_blank" rel="noreferrer">HTTP API ↗</a>
+        <a class="ghost-link" href="/quartz" target="_blank" rel="noreferrer">Native dashboard ↗</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Cron, simple triggers and durable state</p>
+          <h2>Time is a<br><em>contract.</em></h2>
+          <p class="lede">
+            Quartz keeps every trigger and its next fire time in Postgres. Schedule a one-off,
+            add a cron subscription, then pause, resume or fire it from this board.
+          </p>
+          <p class="clock" id="clock">UTC --:--:--</p>
+        </div>
+
+        <div class="stats-grid" aria-label="Quartz statistics">
+          <div class="stat">
+            <span class="stat-value" id="stat-status">—</span>
+            <span class="stat-label">Scheduler</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-jobs">—</span>
+            <span class="stat-label">Jobs</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-triggers">—</span>
+            <span class="stat-label">Triggers</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-cron">—</span>
+            <span class="stat-label">Cron subs</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-heartbeat">—</span>
+            <span class="stat-label">Heartbeat next</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-digest">—</span>
+            <span class="stat-label">Digest next</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <section class="panel launch">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">01 / Dispatch</p>
+              <h3>Schedule work</h3>
+            </div>
+            <p class="panel-note">A simple trigger fires once. A cron trigger owns a repeating slot.</p>
+          </div>
+
+          <div class="panel-body">
+            <form id="one-off-form">
+              <p class="eyebrow">Simple trigger</p>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="one-to">Recipient</label>
+                  <input id="one-to" type="email" value="ops@example.com" required>
+                </div>
+                <div class="field">
+                  <label for="one-delay">Delay (seconds)</label>
+                  <input id="one-delay" type="number" min="1" max="600" value="8" required>
+                </div>
+                <div class="field full">
+                  <label for="one-subject">Subject</label>
+                  <input id="one-subject" type="text" value="One-off handoff" required>
+                </div>
+                <div class="field full">
+                  <label for="one-body">Body</label>
+                  <textarea id="one-body" required>This message is carried by a Quartz SimpleTrigger.</textarea>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn" type="submit" id="one-button">Schedule one-off</button>
+              </div>
+            </form>
+
+            <div class="recurring-card">
+              <div class="recurring-head">
+                <div>
+                  <p class="eyebrow">Built-in recurring</p>
+                  <p class="recurring-title">Maintenance heartbeat</p>
+                </div>
+                <span class="state-pill normal">every 30s</span>
+              </div>
+              <div class="recurring-meta">
+                <span>job <span class="code">heartbeat</span></span>
+                <span>group <span class="code">maintenance</span></span>
+                <span>next <span class="code" id="heartbeat-next">—</span></span>
+              </div>
+              <div class="recurring-meta" style="margin-top: 12px;">
+                <span>job <span class="code">hourly-digest</span></span>
+                <span>cron <span class="code">0 0 * * * ?</span></span>
+                <span>next <span class="code" id="digest-next">—</span></span>
+              </div>
+            </div>
+
+            <form id="cron-form" style="margin-top: 24px;">
+              <p class="eyebrow">Cron subscription</p>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="cron-to">Recipient</label>
+                  <input id="cron-to" type="email" value="team@example.com" required>
+                </div>
+                <div class="field">
+                  <label for="cron-expression">Cron expression</label>
+                  <input id="cron-expression" type="text" value="0 * * * * ?" required>
+                </div>
+                <div class="field full">
+                  <label for="cron-subject">Subject</label>
+                  <input id="cron-subject" type="text" value="Cron report" required>
+                </div>
+                <div class="field full">
+                  <label for="cron-body">Body</label>
+                  <textarea id="cron-body" required>This message is carried by a Quartz CronTrigger.</textarea>
+                </div>
+              </div>
+              <p class="panel-note" style="margin-top: 8px;">Quartz cron format: second minute hour day month weekday.</p>
+              <div class="actions">
+                <button class="btn" type="submit" id="cron-button">Add cron</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <aside class="panel feed">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">02 / Run sheet</p>
+              <h3>Live activity</h3>
+            </div>
+            <p class="panel-note">Every row is written by a job, after the job returns.</p>
+          </div>
+          <div class="panel-body">
+            <ol class="activity-list" id="activity" aria-live="polite"></ol>
+
+            <div class="subhead">
+              <h4>Outbox</h4>
+              <span class="eyebrow" id="outbox-count">0 messages</span>
+            </div>
+            <div class="outbox" id="outbox" aria-live="polite"></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel cron-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">03 / Recurring</p>
+            <h3>Cron subscriptions</h3>
+          </div>
+          <p class="panel-note">Pause the trigger, fire it immediately, or remove the job and its trigger together.</p>
+        </div>
+        <div class="panel-body">
+          <div class="cron-list" id="cron-list" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-stack" id="toasts" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

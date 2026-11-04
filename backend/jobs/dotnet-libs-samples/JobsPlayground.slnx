@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JobsDemo.Hangfire/JobsDemo.Hangfire.csproj" />
+    <Project Path="src/JobsDemo.Quartz/JobsDemo.Quartz.csproj" />
+    <Project Path="src/JobsDemo.Shared/JobsDemo.Shared.csproj" />
+  </Folder>
+</Solution>
