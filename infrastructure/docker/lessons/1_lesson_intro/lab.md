@@ -1,13 +1,4 @@
-﻿**Что исправлено:**
-- Пути вида `/tmp/pid1/...` в `docker build` из PowerShell **не работают** — PowerShell не видит WSL-пути. Все сборки перенесены в `wsl -d docker-desktop`, где и `docker` CLI есть, и `/tmp` — это Linux-путь.
-- В `wsl -d docker-desktop` ты уже **root**, `sudo` там нет — убрал `sudo` из команд внутри WSL2.
-- `docker build - < Dockerfile` работает в bash WSL, но **не** в PowerShell. Оставил только bash-вариант внутри WSL.
-- В Lab 5 (host-OOM) без ограничения памяти WSL2 может съесть все 8–16 ГБ и подвесить Docker Desktop. Добавил обязательный шаг — временно уменьшить память WSL2 через `.wslconfig`.
-- В Lab 2 установка `tini` через `sed` была хрупкой — переписал Dockerfile явно.
-- Добавил в Lab 6 `docker pause/unpause` и `docker stop --time 3` (то, чего не хватало).
-- Добавил в Lab 7 проверку **шаринга слоёв** между образами.
-
----
+﻿# Lab 1 Journal
 
 ```markdown
 ### 🪟 Ключевые особенности работы с Docker на Windows
@@ -19,11 +10,13 @@
    - **`dmesg`, `nsenter`, `cat /sys/fs/cgroup/...`, `ps --forest`, `pstree`** — **только в `wsl -d docker-desktop`**. Ты там **root**, `sudo` нет — не нужен.
    - **Наблюдение за контейнером в реальном времени** (`docker events`, `docker logs -f`) — удобнее в отдельном окне PowerShell.
 4. **Ограничение памяти WSL2** задаётся в `C:\Users\<user>\.wslconfig`:
-   ```ini
-   [wsl2]
-   memory=4GB
-   ```
-   После изменения — `wsl --shutdown` и заново запустить Docker Desktop. Нужно для Lab 5 (host-OOM).
+
+
+[wsl2]
+memory=4GB
+
+
+После изменения — `wsl --shutdown` и заново запустить Docker Desktop. Нужно для Lab 5 (host-OOM).
 
 ---
 
@@ -38,6 +31,7 @@
 **Цель:** Проверить WSL2, cgroup version, и понять, куда «заходить» для глубокого дебага.
 
 **Шаги (PowerShell):**
+
 ```powershell
 wsl --version
 # WSL >= 2.5.1 и kernel >= 6.6 — гарантия cgroup v2
@@ -45,26 +39,16 @@ wsl --version
 docker version
 docker info --format 'Cgroup Driver={{.CgroupDriver}} Cgroup Version={{.CgroupVersion}}'
 # Ожидаем Cgroup Version: 2
+```
 
 wsl -d docker-desktop
 ```
-
 **Внутри WSL2 (`wsl -d docker-desktop`):**
 ```bash
 whoami                # root — это нормально
 docker version        # docker CLI доступен
 stat -fc %T /sys/fs/cgroup    # cgroup2fs → v2
 free -h               # сколько памяти у VM
-```
-
-**Записать в `docker-senior.md` → `## Lab journal`:**
-- версию WSL, kernel, cgroup version;
-- сколько RAM у WSL2 VM (`free -h`);
-- что `sudo` внутри `docker-desktop` нет (ты root);
-- куда я буду заходить за `dmesg`/`nsenter` — в `wsl -d docker-desktop`.
-
-```bash
-exit
 ```
 
 ---
@@ -81,7 +65,7 @@ docker run -d --name chain alpine sleep 1000
 
 ```bash
 wsl -d docker-desktop
-ps -ef --forest | grep -E 'containerd-shim|sleep 1000' | grep -v grep
+ps -o pid,ppid,comm,args | grep -E 'containerd-shim|sleep 1000|CMD'
 ```
 
 Что увидеть:
@@ -94,36 +78,33 @@ ps -ef --forest | grep -E 'containerd-shim|sleep 1000' | grep -v grep
 SPID=$(docker inspect --format '{{.State.Pid}}' chain)
 echo "docker-inspect PID: $SPID"
 ps -p $SPID -o pid,ppid,cmd
-# PPID указывает на shim
+
+для второго distro - покажет процесс chain из общей VM
+для хост машины - аналогично
+
+docker-daemon не видит этот pid, он видит pid с containerd-shim
 ```
 
-**Часть B — SIGKILL-защита PID 1:**
-
-```bash
-docker run --rm --name kill1 alpine sh -c 'kill -9 1; echo "kill -9 1 returned: $?"; ps -p 1; sleep 30'
+containerd-shim - это тонкий вспомогательный процесс-«прослойка», который отвечает за поддержание связи с уже запущенным контейнером и управление его жизненным циклом
 ```
-
-Что увидеть:
-- `kill -9 1 returned: 0` — команда «успешна».
-- но `ps -p 1` **всё ещё показывает** живой процесс, и контейнер продолжает работать.
-- Через `docker kill kill1` (снаружи, из другого терминала или WSL) — контейнер **умирает** с кодом 137.
-
-**Смысл:** ядро не доставляет `SIGKILL`/`SIGSTOP` процессу PID 1, если сигнал пришёл **изнутри его namespace**. Снаружи (через `docker kill` → `runc` → `kill` от процесса хоста) — доставляется.
-
-**Записать:**
-- схему цепочки `dockerd → containerd → shim → процесс (runc уже вышел)`;
-- вывод `kill -9 1` + `ps -p 1` — «kill вернул 0, процесс жив»;
-- почему это важно: любое «убить изнутри» приложение не сможет убить PID 1; это защита.
-
-```powershell
-docker rm -f chain
+docker-desktop distro:
+3340 root      0:00 /usr/bin/containerd-shim-runc-v2 -namespace moby -id 27f8cbb2244cb3b613a94f6929345aaaa86a7dc809ebe
 ```
 
 ---
 
-#### Lab 1. Контейнер ≠ VM: PID namespace и cgroups — 30 мин
+#### Lab 1. Контейнер ≠ VM: PID namespace и cgroups
 
 **Цель:** Увидеть, что контейнер — процесс в namespace, и научиться смотреть cgroups через WSL2.
+
+Вводная:
+
+Пространства имен (namespaces) - механизм изоляции в ядре Linux, каждое пространство имен дает процессам иллюзию, что они находятся в системе одни. Именно на них строится вся контейнеризация. 
+Основные типы: mount (точки монтирования, файловая система, процесс видит свою корневую ОС), uts (hostname и domainname), ipc (очереди сообщений, семафоры, разделяемая память), network, pid, user (uid/gid и capabilities), cgroup (Виртуализованное представление /proc/self/cgroup), time (Смещения для CLOCK_MONOTONIC и CLOCK_BOOTTIME)
+
+cgroup - механизм объединения процессов в иерархические группы и задания им лимитов, чтобы один процесс не забрал все мощности сервера. Управляется через виртуальную файловую систему (обычно /sys/fs/cgroup, чаще в версии cgroup v2)
+
+nsenter - утилита из пакета util-linux, которая позволяет войти в существующее пространство имен другого процесса и выполнить там команду. Использует системный вызов setns
 
 **Шаги:**
 ```powershell
@@ -137,25 +118,30 @@ HOST_PID=$(docker inspect --format '{{.State.Pid}}' ns-lab)
 echo "Host PID: $HOST_PID"
 
 # nsenter: заходим в namespace контейнера
-nsenter -t $HOST_PID -m -n -p -- ps -ef
-# Внутри видно sleep как PID 1
+nsenter -t 1262 -m -u -i -n -p
 
-# cgroup v2 лимиты
-CID=$(docker inspect --format '{{.Id}}' ns-lab)
-cat /sys/fs/cgroup/system.slice/docker-$CID.scope/memory.max
-cat /sys/fs/cgroup/system.slice/docker-$CID.scope/cpu.max
+b894bc426965:/# ps aux
+PID   USER     TIME  COMMAND
+    1 root      0:00 sleep 100000
+    7 root      0:00 /bin/sh
+   22 root      0:00 -sh
+   23 root      0:00 ps aux
 ```
 
-**Ожидаем:** `memory.max = 134217728`, `cpu.max = 50000 100000`.
+Когда вы выполнили docker run -d --name chain alpine sleep 1000:
 
-**Записать:** `HOST_PID` ≠ `1`, но внутри namespace — `PID 1`. Значения `memory.max`/`cpu.max`.
-
-```bash
-exit
-```
-```powershell
-docker rm -f ns-lab
-```
+- Docker CLI отправил запрос демону
+- dockerd сгенерировал config.json для контейнера
+- containerd запустил containerd-shim-runc-v2
+- shim вызвал runc run 27f8cbb...
+- runc внутри себя:
+    - Вызвал clone() с флагами namespaces (как unshare)
+    - Вызвал pivot_root() (как chroot, но безопаснее)
+    - Настроил cgroups
+    - Применил seccomp и capabilities
+    - Вызвал execve("/bin/sleep", ["sleep", "1000"])
+- runc завершился, а sleep остался жить в изоляции
+- shim остался "нянчить" sleep
 
 ---
 
@@ -176,6 +162,9 @@ docker run -d --name mnt-lab alpine sleep 100
 docker exec mnt-lab sh -c 'head -5 /proc/mounts'
 head -5 /proc/mounts
 # увидишь overlay, proc, tmpfs контейнера vs "родные" WSL2 mount'ы
+# у контейнера и хоста разные точки монтирования и корневая файловая система
+
+
 
 # IPC — свои POSIX-очереди
 docker run --rm alpine sh -c 'ipcs -q'
@@ -233,9 +222,9 @@ while True:
     time.sleep(1)
 EOF
 
-# Dockerfile.shell
+# Dockerfile.shell - shell запускается как PID = 1
 cat > Dockerfile.shell <<'EOF'
-FROM python:3.12-slim
+FROM dockerhub.timeweb.cloud/library/python:3.12-slim
 WORKDIR /app
 COPY app.py .
 CMD python app.py
@@ -243,7 +232,7 @@ EOF
 
 # Dockerfile.exec — exec form, без обработчика
 cat > Dockerfile.exec <<'EOF'
-FROM python:3.12-slim
+FROM dockerhub.timeweb.cloud/library/python:3.12-slim
 WORKDIR /app
 COPY app.py .
 CMD ["python", "app.py"]
@@ -251,7 +240,7 @@ EOF
 
 # Dockerfile.graceful — exec form + обработчик
 cat > Dockerfile.graceful <<'EOF'
-FROM python:3.12-slim
+FROM dockerhub.timeweb.cloud/library/python:3.12-slim
 WORKDIR /app
 COPY app_graceful.py app.py
 CMD ["python", "app.py"]
@@ -259,7 +248,7 @@ EOF
 
 # Dockerfile.tini — exec form + tini
 cat > Dockerfile.tini <<'EOF'
-FROM python:3.12-slim
+FROM dockerhub.timeweb.cloud/library/python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends tini \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
@@ -275,21 +264,74 @@ done
 # Прогоняем замеры
 for tag in shell exec graceful tini; do
   echo "=== $tag ==="
-  docker run -d --name pid1-$tag pid1:$tag
+  docker run -d --name pid1-$tag pid1:$tag >/dev/null
   sleep 1
-  echo "PID 1:"
-  docker exec pid1-$tag ps -ef | head -3
-  S=$(date +%s.%N)
-  docker stop pid1-$tag
-  E=$(date +%s.%N)
-  echo "stop took: $(echo "$E - $S" | bc) sec"
+  echo "--- PID 1 (через /proc) ---"
+  docker exec pid1-$tag sh -c 'tr "\0" " " < /proc/1/cmdline; echo'
+  echo "--- process tree ---"
+  docker top pid1-$tag
+
+  S=$(date +%s%3N)
+  docker stop pid1-$tag >/dev/null
+  E=$(date +%s%3N)
+  echo "stop took: $((E - S)) ms"
+
   docker inspect pid1-$tag --format 'exit={{.State.ExitCode}}'
   docker rm pid1-$tag >/dev/null
 done
 ```
 
+Итог:
+
+```
+=== shell ===
+--- PID 1 (через /proc) ---
+--- process tree ---
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                1756                1732                4                   12:09               ?                   00:00:00            /bin/sh -c python app.py
+root                1770                1756                2                   12:09               ?                   00:00:00            python app.py
+stop took: 3346 ms
+exit=137
+
+Вывод: SIGTERM пришёл в sh. sh как PID 1 проигнорировал его (нет хендлера + защита PID 1), python в дочернем процессе ничего не получил. По таймауту — SIGKILL всей cgroup
+
+=== exec ===
+--- PID 1 (через /proc) ---
+python app.py
+--- process tree ---
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                1863                1839                7                   12:09               ?                   00:00:00            python app.py
+stop took: 3352 ms
+exit=137
+
+Вывод: SIGTERM пришёл в python. Python без хендлера + PID 1 → сигнал отброшен ядром. Таймаут → SIGKILL
+
+=== graceful ===
+--- PID 1 (через /proc) ---
+python app.py
+--- process tree ---
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                2006                1982                12                  12:09               ?                   00:00:00            python app.py
+stop took: 338 ms
+exit=0
+
+Вывод: Хендлер поймал SIGTERM → sys.exit(0) → чистое завершение
+
+=== tini ===
+--- PID 1 (через /proc) ---
+tini -- python app.py
+--- process tree ---
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                2105                2081                4                   12:09               ?                   00:00:00            tini -- python app.py
+root                2119                2105                2                   12:09               ?                   00:00:00            python app.py
+stop took: 327 ms
+exit=143
+
+Вывод: tini поймал SIGTERM, форварднул python (уже не PID 1 → сигнал доставлен, default action = terminate). Python умер по SIGTERM, tini вернул 128+15=143
+```
+
 **Что ожидать:**
-- `shell`: PID 1 — `/bin/sh -c "python app.py"` (dash в slim, exec-оптимизация **не** сработает). `stop` ~10 сек, `exit=137`.
+- `shell`: PID 1 — `/bin/sh -c "python app.py"` (dash в slim, exec-оптимизация **не** сработает). `stop` ~10 сек (у меня переопределена в 3), `exit=137`.
 - `exec`: PID 1 = `python`, но без обработчика — ядро игнорирует SIGTERM для PID 1 → 10 сек, `exit=137`.
 - `graceful`: stop **мгновенно**, `exit=0`. В логах — «got 15».
 - `tini`: PID 1 = tini, python — ребёнок. tini форвардит SIGTERM → python **не PID 1** → default action terminate → мгновенно, `exit=143` (не 0!). **Это сюрприз:** tini «спасает» от 10 секунд, но не делает shutdown graceful, если в приложении нет обработчика.
@@ -312,30 +354,32 @@ mkdir -p /tmp/zombie && cd /tmp/zombie
 
 cat > spawner.py <<'EOF'
 import os, time, sys
-# Форкаем 10 короткоживущих детей, но НЕ ждём их
+
 for i in range(10):
     pid = os.fork()
     if pid == 0:
-        sys.exit(0)   # ребёнок сразу умирает
-print(f"parent pid={os.getpid()}, forked 10 without wait", flush=True)
+        sys.exit(0)  # ребёнок сразу умирает
+
+print(f"parent pid={os.getpid()}, forked 10 and reaped each", flush=True)
 while True:
     time.sleep(60)
 EOF
 
 # Без tini — PID 1 сам Python, никто не жнёт зомби
 cat > Dockerfile.noinit <<'EOF'
-FROM python:3.12-slim
+FROM dockerhub.timeweb.cloud/library/python:3.12-slim
 COPY spawner.py /spawner.py
 CMD ["python", "/spawner.py"]
 EOF
 
 # С tini — он PID 1, жнёт зомби
 cat > Dockerfile.tini <<'EOF'
-FROM python:3.12-slim
+FROM dockerhub.timeweb.cloud/library/python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends tini \
     && rm -rf /var/lib/apt/lists/*
 COPY spawner.py /spawner.py
 ENTRYPOINT ["tini", "--", "python", "/spawner.py"]
+CMD []
 EOF
 
 docker build -f Dockerfile.noinit -t zombie:noinit .
@@ -353,43 +397,92 @@ docker exec z-noinit ps -ef
 # Ожидаем увидеть несколько строк с <defunct> или Z
 docker exec z-noinit sh -c 'ps -ef | grep -c "\[.*\] <defunct>" || true'
 
-# С tini
-docker run -d --name z-tini zombie:tini
-sleep 3
-echo "=== with tini ==="
-docker exec z-tini ps -ef
-# Ожидаем: НЕТ <defunct>, tini их пожинает
+docker exec z-noinit sh -c '
+  echo "=== zombies ==="
+  for p in /proc/[0-9]*; do
+    st=$(awk "{print \$3}" "$p/stat" 2>/dev/null)
+    [ "$st" = "Z" ] && echo "$p state=$st"
+  done
+  echo "=== total zombie count ==="
+  for p in /proc/[0-9]*; do
+    awk "{print \$3}" "$p/stat" 2>/dev/null
+  done | grep -c Z
+'
 ```
 
-**Что увидеть:**
-- `z-noinit`: в `ps -ef` — строки `[python] <defunct>` (10 штук). Python их не пожинает — он же PID 1, `wait()` сам не вызывает.
-- `z-tini`: зомби нет — tini сидит в цикле `wait()` и жнёт всех.
+Ответ:
+```
+=== zombies ===
+/proc/10 state=Z
+/proc/11 state=Z
+/proc/12 state=Z
+/proc/13 state=Z
+/proc/14 state=Z
+/proc/15 state=Z
+/proc/16 state=Z
+/proc/7 state=Z
+/proc/8 state=Z
+/proc/9 state=Z
+=== total zombie count ===
+10
+```
 
-**Записать:**
-- 10 зомби без tini, 0 с tini;
+# С tini
+
+```
+docker run -d --name z-tini zombie:tini
+
+docker exec z-tini sh -c '
+  for p in /proc/[0-9]*; do
+    st=$(awk "{print \$3}" "$p/stat" 2>/dev/null)
+    [ "$st" = "Z" ] && echo "$p state=$st"
+  done
+  echo "--- count ---"
+  for p in /proc/[0-9]*; do
+    awk "{print \$3}" "$p/stat" 2>/dev/null
+  done | grep -c Z
+'
+```
+
+Ответ:
+```
+=== zombies ===
+/proc/10 state=Z
+/proc/11 state=Z
+/proc/12 state=Z
+/proc/13 state=Z
+/proc/14 state=Z
+/proc/15 state=Z
+/proc/16 state=Z
+/proc/7 state=Z
+/proc/8 state=Z
+/proc/9 state=Z
+=== total zombie count ===
+10
+```
+
+**Выводы:**
+- sh специально игнорирует зомби процессы и не освобождает PID, это сделано специально для диагностики, чтобы можно было выполнив ps увидеть зомби
+- tini работает лишь с осиротевшими процессами, пока жив родитель tini не доберется до него
+- если родитель не ожидает своего ребенка, то он станет зомби
 - **правило проверки в проде**: `docker exec <c> ps -ef | grep defunct` — если видишь зомби, у приложения утечка PID'ов;
 - когда это критично: интенсивный форк короткоживущих процессов (ffmpeg, imagemagick, шелл-вызовы, `subprocess.Popen` без `.wait()`);
 - решение: `--init` в `docker run`/compose или `ENTRYPOINT ["tini", "--", ...]`.
-
-```bash
-docker rm -f z-noinit z-tini
-rm -rf /tmp/zombie
-```
 
 ---
 
 #### Lab 3. Галерея exit codes — 25 мин
 
 ```powershell
-docker run --rm alpine nosuchcommand;        echo "exit=$LASTEXITCODE"   # 127
-docker run --rm -v /tmp:/tmp alpine sh -c 'echo hi > /tmp/x && chmod -x /tmp/x && /tmp/x'; echo "exit=$LASTEXITCODE"  # 126
-docker run --rm --memory=abc alpine true;    echo "exit=$LASTEXITCODE"   # 125
-docker run --rm alpine sh -c 'kill -TERM $$';echo "exit=$LASTEXITCODE"   # 143
-docker run --rm alpine sh -c 'kill -KILL $$';echo "exit=$LASTEXITCODE"   # 137
-docker run --rm alpine sh -c 'kill -SEGV $$';echo "exit=$LASTEXITCODE"   # 139
+docker run --rm alpine nosuchcommand;        echo "exit=$LASTEXITCODE"   # 127 - команда nosuchcommand не найдена
+docker run --rm -v /tmp:/tmp alpine sh -c 'echo hi > /tmp/x && chmod -x /tmp/x && /tmp/x'; echo "exit=$LASTEXITCODE"  # 126 - команда не executable
+docker run --rm --memory=abc alpine true;    echo "exit=$LASTEXITCODE"   # 125 ошибка самого docker (не смог запустить, тк --memory=abc - невалидная команда)
+docker run --rm alpine sh -c 'kill -TERM $$';echo "exit=$LASTEXITCODE"   # 0, тк PID=1 получает sh и отбрасывает сигнал о kill
+docker run --rm --init alpine sh -c 'kill -TERM $$';echo "exit=$LASTEXITCODE"   # 143, SIGTERM, корректный stop
+docker run --rm alpine sh -c 'kill -KILL $$';echo "exit=$LASTEXITCODE"   # 0, тк PID=1 получает sh и отбрасывает сигнал о kill
+docker run --rm alpine sh -c 'kill -KILL $$';echo "exit=$LASTEXITCODE"   # 137, SIGKILL, kill с хоста
+docker run --rm --init alpine sh -c 'kill -SEGV $$';echo "exit=$LASTEXITCODE"   # 139, SIGSEGV
 ```
-
-> Если `-v /tmp:/tmp` в PowerShell подставит Windows-путь и сломается — выполни строку 126 внутри `wsl -d docker-desktop`.
 
 **Записать:** таблицу `команда → код → причина`. Особенно **125 (docker сам) vs 127 (команда в контейнере не найдена)**.
 
@@ -410,7 +503,7 @@ while True:
 EOF
 
 cat > Dockerfile <<'EOF'
-FROM python:3.12-slim
+FROM dockerhub.timeweb.cloud/library/python:3.12-slim
 COPY hog.py /hog.py
 CMD ["python", "/hog.py"]
 EOF
@@ -424,6 +517,11 @@ docker run -d --name oom-cgroup --memory=128m oom-lab
 docker events --filter container=oom-cgroup --filter event=oom --filter event=die
 ```
 
+Ответ:
+```
+2026-11-18T22:25:54.277843238+03:00 container oom 82c4d21e5b7a2202246b817304eed1a6e6b845bb104b8be46104d366aae823f2 (desktop.docker.io/ports.scheme=v2, desktop.docker.io/wsl-distro=Ubuntu-22.04, image=oom-lab, name=oom-cgroup)
+```
+
 Подожди 10–30 секунд. Контейнер упадёт.
 
 **Проверка (можно в WSL или PowerShell):**
@@ -431,20 +529,9 @@ docker events --filter container=oom-cgroup --filter event=oom --filter event=di
 docker inspect oom-cgroup --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
 # exit=137 oom=true
 docker events --since 5m --filter container=oom-cgroup
-# container oom ...
+# create -> start -> oom -> die (exitCode=137) -> destroy
 # container die ... exitCode=137
 ```
-
-```bash
-wsl -d docker-desktop
-CID=$(docker inspect --format '{{.Id}}' oom-cgroup)
-cat /sys/fs/cgroup/system.slice/docker-$CID.scope/memory.events
-# oom 1
-# oom_kill 1
-dmesg -T | grep -iE 'oom|killed process' | tail -5
-```
-
-**Записать:** три доказательства `cgroup-OOM` — `OOMKilled=true` + `events: oom` + `memory.events: oom_kill=1`. Это **эталон**, с которым дальше сравниваешь всё.
 
 ```bash
 docker rm -f oom-cgroup
@@ -477,24 +564,18 @@ docker inspect oom-host --format 'exit={{.State.ExitCode}} oom={{.State.OOMKille
 # exit=137, oom может быть false
 
 dmesg -T | grep -iE 'oom|killed process' | tail -20
-# "Out of memory: Killed process <pid> (python) ..."
+
+# [Wed Nov 18 22:38:39 2026] Out of memory: Killed process 24985 (python) total-vm:3978616kB, anon-rss:3200512kB, file-rss:152kB, shmem-rss:0kB, UID:0 pgtables:7820kB oom_score_adj:0
 ```
 
 **Что увидеть:**
 - `OOMKilled=false` — но `dmesg` кричит про OOM.
 - Возможно, убьётся не только контейнер, но и другие процессы VM — это и есть «бомба без лимита».
 
-**Записать:**
+**Выводы:**
 - главный вывод: **`OOMKilled=false` + `exit=137` ≠ «не OOM»**;
 - на голом Linux `dmesg` — на хосте; на Docker Desktop — внутри `wsl -d docker-desktop`;
 - вывод: `--memory` обязателен для всех прод-контейнеров, иначе «взорвётся» сосед/хост.
-
-**Откатить `.wslconfig`:**
-- удали строку `memory=2GB` (или файл целиком), `wsl --shutdown`, перезапусти Docker Desktop.
-
-```bash
-docker rm -f oom-host
-```
 
 ---
 
@@ -509,7 +590,11 @@ docker kill d137-kill
 Start-Sleep -Seconds 1
 docker inspect d137-kill --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
 docker events --since 5m --filter container=d137-kill
-# kill signal=9 → die 137, oom=false
+
+Не OOM, kill:
+2026-11-18T22:44:20.029808582+03:00 container kill cb91f05aff5d7fb9186b6d14e2ad525e098bb87bd340ca3329bec7ccc3b61f64 (desktop.docker.io/ports.scheme=v2, desktop.docker.io/wsl-distro=Ubuntu-22.04, image=alpine, name=d137-kill, signal=9)
+2026-11-18T22:44:20.191250096+03:00 container die cb91f05aff5d7fb9186b6d14e2ad525e098bb87bd340ca3329bec7ccc3b61f64 (desktop.docker.io/ports.scheme=v2, desktop.docker.io/wsl-distro=Ubuntu-22.04, execDuration=3, exitCode=137, image=alpine, name=d137-kill)
+
 
 # B. stop с игнором SIGTERM
 docker run -d --name d137-stop alpine sh -c 'trap "" TERM; sleep 100'
@@ -517,13 +602,10 @@ Start-Sleep -Seconds 1
 Measure-Command { docker stop d137-stop }
 docker inspect d137-stop --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
 docker events --since 5m --filter container=d137-stop
-# kill signal=15 → ~10s → kill signal=9 → die 137
 
-# B2. stop --time 3 — таймаут сокращён до 3 сек
-docker run -d --name d137-stop3 alpine sh -c 'trap "" TERM; sleep 100'
-Start-Sleep -Seconds 1
-Measure-Command { docker stop --time 3 d137-stop3 }
-# ~3 сек, а не 10
+2026-11-18T22:45:50.963465125+03:00 container start dd92b24f35c640e2e5e0016a1d3bc97a196ade7db61d3e53e3866dc6347e31a3 (desktop.docker.io/ports.scheme=v2, image=alpine, name=d137-stop)
+2026-11-18T22:45:51.108233318+03:00 container die dd92b24f35c640e2e5e0016a1d3bc97a196ade7db61d3e53e3866dc6347e31a3 (desktop.docker.io/ports.scheme=v2, execDuration=0, exitCode=2, image=alpine, name=d137-stop)
+
 
 # C. OOM
 docker run -d --name d137-oom --memory=64m oom-lab
@@ -554,12 +636,6 @@ docker exec paused sh -c 'wc -l /tmp/t'                  # растёт снов
 | `docker stop --time 3` | false | `signal=15` → 3с → `signal=9` | ~3с | освобождается |
 | cgroup-OOM | true | `oom` | мгновенно | освобождается |
 | `docker pause` | — | — | — | **держится**, процесс в SIGSTOP |
-
-Прогнать дважды, второй раз — не подглядывая.
-
-```powershell
-docker rm -f d137-kill d137-stop d137-stop3 d137-oom paused
-```
 
 ---
 
@@ -648,12 +724,7 @@ docker rm vol
 docker run --rm -v mydata:/data alpine cat /data/data.txt
 # hello
 
-# 3. Где физически лежит volume (в WSL2)
-wsl -d docker-desktop
-ls -la /var/lib/docker/volumes/mydata/_data/
-cat /var/lib/docker/volumes/mydata/_data/data.txt
-
-# 4. Cleanup
+# 3. Cleanup
 docker volume rm mydata
 ```
 
@@ -699,6 +770,7 @@ docker attach --sig-proxy=false log-lab2
 - механизм: `attach` — pipe (byte-once), `logs -f` — лог-файл (можно читать параллельно);
 - `Ctrl+C` по умолчанию = SIGINT в PID 1 (убивает сервис); `--sig-proxy=false` — не убивает;
 - в проде: для логов **только** `docker logs -f --tail=100`, никогда `attach`.
+- при этом даже при attach мы не теряем логи, они в logs все равно идут
 
 ```powershell
 docker rm -f log-lab log-lab2
@@ -741,15 +813,6 @@ docker rm -f log-lab log-lab2
 
 ---
 
-### 💎 Итог по Windows
-
-- **`wsl -d docker-desktop`** — твой вход в Linux-мир контейнеров: `dmesg`, `nsenter`, `ps --forest`, `/sys/fs/cgroup/*`, `/var/lib/docker/*`. Ты там root, `sudo` нет.
-- **PowerShell** — для наблюдения (`docker events`, `docker logs -f`) и запуска `docker`-команд в отдельных окнах.
-- **Все сборки с файлами в `/tmp/...`** — только из WSL, иначе PowerShell не увидит путь.
-- **`.wslconfig`** — единственный способ ограничить память VM для Lab 5, и напоминание: **без `--memory` контейнеры съедают VM, как в «голом» Linux хосте**.
-
----
-
 ### 📋 Чек-лист покрытия Урока 1
 
 | Тема | Лаба |
@@ -774,12 +837,3 @@ docker rm -f log-lab log-lab2
 | 137: OOM vs kill vs stop-timeout | 6 |
 | `attach` vs `logs -f` (+ `--sig-proxy=false`) | 8 |
 | Судьба данных: writable layer vs volume | 7b |
-
-После прохождения — **следующий блок: сборка образов** (Dockerfile, кэш, multi-stage, `.dockerignore`, ARG/ENV, distroless). Там будет своя лаба: собрать Python-сервис с 1.2 ГБ → <200 МБ, замерить время сборки и размер до/после, и **кэш в действии** (`docker build` второй раз должен быть за секунды).
-```
-
----
-
-**Что осталось непокрытым сознательно:** `auditd`, `strace`, `sidecar-дебаг` — это блок 9 (отладка в проде), туда и пойдём после блока сборки. Для Урока 1 чек-лист закрыт полностью.
-
-После прохождения пришли `## Lab journal` — разберу, где что не сошлось. Особенно жду Lab 2b (зомби), Lab 5 (host-OOM) и Lab 7b (volume) — они самые «шрамообразующие».
