@@ -1,9 +1,5 @@
 ﻿# Docker — Lab 4 Journal. Данные: volumes, bind mounts, tmpfs, backup/restore
 
-> Продолжение `Lab 3 Journal`. Теория — в `README.md` (Урок 4), здесь — практика.
-> Все лабы выполняются **в `wsl -d docker-desktop`**, если не указано иное.
-> Пути `/tmp/...` и `$(pwd)` работают в WSL; в PowerShell — нет.
-
 **Итого: ~4 часа 15 минут.** Перерыв — после Lab 5 (PostgreSQL) и Lab 7 (pg_dump vs tar): там больше всего «почему не работает».
 
 ---
@@ -16,17 +12,25 @@
 wsl -d docker-desktop
 
 docker version --format '{{.Server.Version}}'
+# 29.9.3
 docker info --format 'Storage Driver={{.Driver}}'
-# Ожидаемо: Storage Driver=overlay2
+# Ожидаемо: Storage Driver=overlay2 done
 
 docker volume ls
 # Ожидаемо: пусто или DRIVER VOLUME NAME (если раньше уже работал с volume)
 
 # Где физически лежат volumes
-ls /var/lib/docker/volumes/ 2>/dev/null || echo "(пусто — ещё не создавали)"
+ls /mnt/docker-desktop-disk/data/docker/volumes
+# 131b07266a446249bbf8be5ed8cddf342672e9303bf56e49cd7b09cbb118268b
+# 5acd30706b76eba0db1b24a033d245f0ffc1251b251a0cf88a8c209b49c2808f
+# backingFsBlockDev
+# dotnet-libs_jobs-postgres-data
+# metadata.db
+# opentelemetry_grafana-data
+# opentelemetry_tempo-data
 ```
 
-**Записать:** драйвер (`overlay2`), путь `/var/lib/docker/volumes/`, что сейчас пусто.
+**Записать:** драйвер (`overlay2`), путь `/mnt/docker-desktop-disk/data/docker/volumes`
 
 ---
 
@@ -45,16 +49,17 @@ docker exec wl cat /data.txt
 
 # Где этот файл физически? — в overlay2 (upperdir)
 docker inspect wl --format '{{.GraphDriver.Data.UpperDir}}'
-# /var/lib/docker/overlay2/<hash>/diff
+# /var/lib/docker/overlay2/72874f8e9769495b648ee71bbcd3df1686d7ac8fac1ed38ab2a230f2b0b135a8/diff
 
-ls /var/lib/docker/overlay2/<hash>/diff/ 2>/dev/null
-# Ожидаемо: data.txt лежит ТУТ
+docker inspect wl --format '{{.GraphDriver.Data.MergedDir}}'
+# \\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\overlay2\fbdaf9e0a877f07efd123f79774f8a6f5f39ba8bd8cf050b3914c612a2af2731\merged
+
+# \\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\overlay2\fbdaf9e0a877f07efd123f79774f8a6f5f39ba8bd8cf050b3914c612a2af2731\merged
 
 # А теперь — убьём контейнер
 docker rm -f wl
 
-# Файла больше нет ни в контейнере, ни в overlay2
-ls /var/lib/docker/overlay2/<hash>/diff/ 2>/dev/null || echo "нет такой директории — upperdir удалён"
+# Сразу после этого все из overlay2 теряется
 ```
 
 **Вывод:** `docker rm` **удаляет** writable layer целиком. Данные **потеряны**.
@@ -101,14 +106,13 @@ docker rm -f wl3
 ```bash
 docker volume create mydata
 docker volume inspect mydata --format 'Mountpoint={{.Mountpoint}} Driver={{.Driver}}'
-# Ожидаемо: Mountpoint=/var/lib/docker/volumes/mydata/_data Driver=local
+# Mountpoint=/var/lib/docker/volumes/mydata/_data Driver=local
 
 docker run -d --name c1 -v mydata:/data alpine sh -c 'echo "hello" > /data/hi.txt; sleep 1000'
 docker exec c1 cat /data/hi.txt
-# Ожидаемо: hello
+# hello
 
-# На хосте — файл виден через Mountpoint
-cat /var/lib/docker/volumes/mydata/_data/hi.txt
+# \\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\mydata\_data\hi.txt
 # Ожидаемо: hello
 
 # Убиваем контейнер
@@ -117,7 +121,8 @@ docker rm -f c1
 # А volume — жив!
 docker volume ls
 docker run --rm -v mydata:/data alpine cat /data/hi.txt
-# Ожидаемо: hello — данные ПЕРЕЖИЛИ контейнер
+# hello 
+# -> данные ПЕРЕЖИЛИ контейнер
 ```
 
 **Вывод:** volume **не** привязан к контейнеру. Удалили контейнер — volume остался.
@@ -133,13 +138,14 @@ docker exec c2 sh -c 'echo "from c2" >> /data/shared.txt'
 
 # Читаем из c3
 docker exec c3 cat /data/shared.txt
-# Ожидаемо: from c2 — тот же volume, те же данные
+# from c2
 
 # Одновременная запись из обоих
 docker exec c2 sh -c 'echo "line from c2" >> /data/log.txt'
 docker exec c3 sh -c 'echo "line from c3" >> /data/log.txt'
 docker exec c2 cat /data/log.txt
-# Ожидаемо: обе строки (порядок может меняться — это гонка)
+# line from c2
+# line from c3
 ```
 
 **Вывод:** named volume — **общий** ресурс. Несколько контейнеров видят **одни и те же** файлы. Это основа для «sidecar»-паттернов (например, nginx + logrotate в одном volume).
@@ -162,7 +168,8 @@ docker build -t vol-init:1 .
 
 docker volume create init-vol
 docker run --rm -v init-vol:/data vol-init:1 cat /data/config.txt
-# Ожидаемо: default config — Docker СКОПИРОВАЛ из образа в volume
+# default config
+# Docker СКОПИРОВАЛ из образа в volume
 ```
 
 **Что произошло:** volume `init-vol` был **пуст** при первом запуске. Docker видит, что в образе в `/data` **есть файлы** (через `VOLUME /data`), и **копирует** их в volume. Если бы volume **не** был пуст — Docker **не** тронул бы его.
@@ -196,6 +203,21 @@ docker volume ls
 ```
 
 **Проблема:** анонимный volume **невозможно** осмысленно переиспользовать — его имя хэш. Только `docker inspect a1` покажет, какой volume используется.
+
+```txt
+"Mounts": [
+  {
+      "Type": "volume",
+      "Name": "fd3d924d9f641f19f3f581aa6ec47ad814cf3fd28764b53118c14cb6949921be",
+      "Source": "/var/lib/docker/volumes/fd3d924d9f641f19f3f581aa6ec47ad814cf3fd28764b53118c14cb6949921be/_data",
+      "Destination": "/data",
+      "Driver": "local",
+      "Mode": "",
+      "RW": true,
+      "Propagation": ""
+  }
+]
+```
 
 **Что записать:**
 - named volume **переживает** `docker rm` контейнера;
@@ -248,18 +270,12 @@ mkdir -p /tmp/bind-perm
 sudo chown root:root /tmp/bind-perm
 sudo chmod 755 /tmp/bind-perm
 
-# Запустим контейнер с UID 1000, который пытается писать в /data
-docker run --rm -v /tmp/bind-perm:/data alpine sh -c 'echo test > /data/f.txt'
-# Ожидаемо: "can't create /data/f.txt: Permission denied" — потому что /tmp/bind-perm принадлежит root:root с правами 755
-# (в alpine по умолчанию root, но если бы был UID 1000 — не смог бы писать)
-
-# А теперь запустим от root
 docker run --rm -v /tmp/bind-perm:/data alpine sh -c 'echo test > /data/f.txt && cat /data/f.txt'
-# Ожидаемо: test — работает от root
+# Ожидаемо: test
 
 # Имитируем "не-root пользователя" (UID 1000 = типичный appuser)
 docker run --rm -u 1000:1000 -v /tmp/bind-perm:/data alpine sh -c 'echo test2 > /data/f2.txt'
-# Ожидаемо: Permission denied
+# sh: can't create /data/f2.txt: Permission denied
 ```
 
 **Три способа починить:**
@@ -273,14 +289,9 @@ ls -ln /tmp/bind-perm
 # drwxr-xr-x 2 1000 1000 ...   ← владелец 1000
 docker run --rm -u 1000:1000 -v /tmp/bind-perm:/data alpine sh -c 'echo test2 > /data/f2.txt && echo ok'
 # Ожидаемо: ok
-
-# Способ 3: named volume (Docker сам управляет правами)
-docker volume create perm-vol
-docker run --rm -v perm-vol:/data -u 1000:1000 alpine sh -c 'echo test > /data/f.txt'
-# Ожидаемо: (без ошибки, но проверь: файл создан от 1000)
 ```
 
-**Вывод:** bind mount **наследует** права с хоста. Если в контейнере UID **не совпадает** с владельцем на хосте — `Permission denied`. Named volume **не** даёт этих проблем (Docker сам управляет правами).
+**Вывод:** bind mount **наследует** права с хоста. Если в контейнере UID **не совпадает** с владельцем на хосте — `Permission denied`. И Named volume **не** решает этих проблем (Docker сам не управляет правами).
 
 ### Часть C — read-only bind mount
 
@@ -291,12 +302,11 @@ docker run --rm --mount type=bind,source=/tmp/bind-ro,target=/etc/app,readonly a
 # Ожидаемо: config v1 — чтение работает
 
 docker run --rm --mount type=bind,source=/tmp/bind-ro,target=/etc/app,readonly alpine sh -c 'echo "hacked" > /etc/app/app.conf'
-# Ожидаемо: "read-only file system"
+# sh: can't create /etc/app/app.conf: Read-only file system
 
 # А без readonly — можно писать
 docker run --rm -v /tmp/bind-ro:/etc/app alpine sh -c 'echo "v2" > /etc/app/app.conf'
 cat /tmp/bind-ro/app.conf
-# Ожидаемо: v2 — файл на хосте ИЗМЕНЁН из контейнера!
 ```
 
 **Зачем `:ro`:** контейнер **не может** изменить конфиг/сертификат на хосте. Обязательно для конфигов, метрик, статических данных.
@@ -306,20 +316,21 @@ cat /tmp/bind-ro/app.conf
 ```bash
 docker run --rm -v /tmp/does-not-exist-xyz:/data alpine sh -c 'echo hi > /data/f.txt'
 ls /tmp/does-not-exist-xyz/f.txt
-# Ожидаемо: f.txt — Docker СОЗДАЛ каталог на хосте!
+# f.txt 
+# Docker СОЗДАЛ каталог на хосте!
 
 # С --mount — упадёт с ошибкой
 docker run --rm --mount type=bind,source=/tmp/does-not-exist-abc,target=/data alpine sh -c 'echo hi'
-# Ожидаемо: Error: ... source path does not exist
+# hi
 ```
 
-**Вывод:** `-v` **молча создаёт** каталог, если его нет (часто **не то, что хотели**). `--mount` **явно проверяет** — **лучше** для production.
+**Вывод:** `-v` **молча создаёт** каталог, если его нет (часто **не то, что хотели**). `--mount` **тоже явно не проверяет**
 
 **Что записать:**
 - bind mount — **двусторонняя** live-связь с хостом;
 - права **наследуются** — `Permission denied` решается `chown` / `-u` / named volume;
 - `:ro` — **обязательно** для конфигов;
-- `-v` создаёт несуществующие пути, `--mount` — нет.
+- `-v` создаёт несуществующие пути, `--mount` — тоже нет.
 
 ```bash
 docker rm -f bm 2>/dev/null
@@ -340,17 +351,17 @@ docker volume rm perm-vol 2>/dev/null
 docker run -d --name t1 --tmpfs /data:size=10m alpine sh -c 'echo "in ram" > /data/f.txt; sleep 1000'
 
 docker exec t1 cat /data/f.txt
-# Ожидаемо: in ram
+# in ram
 
 # Внутри контейнера — это tmpfs
 docker exec t1 df -h /data
-# Ожидаемо: Filesystem Size Used Avail Use% Mounted on
-#           tmpfs       10M  4.0K   10M   1% /data
+# Filesystem                Size      Used Available Use% Mounted on
+# tmpfs                    10.0M      4.0K     10.0M   0% /data
 
 # А теперь остановим и запустим новый с тем же --tmpfs
 docker rm -f t1
 docker run --rm --tmpfs /data:size=10m alpine ls /data
-# Ожидаемо: пусто — данные ИСЧЕЗЛИ
+# пусто — данные ИСЧЕЗЛИ
 ```
 
 **Вывод:** tmpfs **не** переживает **ни** stop, **ни** rm. Данные — **только** в RAM на время жизни контейнера.
@@ -360,23 +371,23 @@ docker run --rm --tmpfs /data:size=10m alpine ls /data
 ```bash
 # Лимит 64 МБ, tmpfs 128 МБ — попробуем записать 100 МБ
 docker run --rm --memory=64m --tmpfs /data:size=128m alpine sh -c 'dd if=/dev/zero of=/data/big bs=1M count=100 2>&1 | tail -3; ls -lh /data/'
-# Ожидаемо: либо dd упадёт с "No space left on device" (если size=128m упрётся)
-# либо контейнер будет KILLED по OOM (если запись превысит --memory)
 
 docker inspect <container> --format 'oom={{.State.OOMKilled}} exit={{.State.ExitCode}}' 2>/dev/null
-# Ожидаемо: oom=true, exit=137
+# oom=false
 ```
 
 **Точный эксперимент** — сначала `size` больше `--memory`, но запись **меньше** `--memory`:
 
 ```bash
-# Лимит 64m, tmpfs 128m, пишем 50m — норм
-docker run --rm --memory=64m --tmpfs /data:size=128m alpine sh -c 'dd if=/dev/zero of=/data/big bs=1M count=50 && ls -lh /data/'
-# Ожидаемо: OK, 50M
+docker run --name c2 --memory=64m --tmpfs /data:size=70m alpine sh -c 'dd if=/dev/zero of=/data/big bs=1M count=100 2>&1 | tail -3; ls -lh /data/'
 
-# Лимит 64m, пишем 100m — OOM
-docker run --rm --memory=64m --tmpfs /data:size=128m alpine sh -c 'dd if=/dev/zero of=/data/big bs=1M count=100 2>&1 | tail -2; true'
-# Ожидаемо: Killed (OOM), exit=137
+docker inspect c2  --format 'oom={{.State.OOMKilled}} exit={{.State.ExitCode}}' 2>/dev/null
+# oom=false exit=0
+
+docker run --name c3 --memory=10m --tmpfs /data:size=70m alpine sh -c 'dd if=/dev/zer
+o of=/data/big bs=1M count=100 2>&1 | tail -3; ls -lh /data/'
+# oom=true exit=0
+# превысили memory
 ```
 
 **Вывод:** tmpfs **считается** в `--memory`. `size=` ограничивает **размер** tmpfs, но **не** расширяет memory limit. Заполнение свыше `--memory` → **OOM kill**.
@@ -397,16 +408,7 @@ docker logs sec | tail -1
 
 # Проверим, что файл /run/secrets/db НЕ на диске хоста
 docker inspect sec --format '{{range .Mounts}}{{.Type}} {{.Source}} → {{.Destination}}{{"\n"}}{{end}}'
-# Ожидаемо: bind /tmp/secret.txt → /source/secret
-#           tmpfs  (source пусто) → /run/secrets
-
-# Даже если убить контейнер — файла нет ни в overlay2, ни на хосте
-docker rm -f sec
-find /var/lib/docker/overlay2 -name 'db' 2>/dev/null
-# Ожидаемо: (пусто) — файла нет
-
-find /tmp -name 'db' 2>/dev/null
-# Ожидаемо: (пусто) — и на хосте нет
+# bind /tmp/secret.txt → /source/secret
 ```
 
 **Вывод:** tmpfs **не** оставляет следов на диске. Идеально для секретов в runtime — токенов, расшифрованных ключей, паролей.
@@ -435,52 +437,48 @@ ls -la /tmp/pgdata-bind
 # Ожидаемо: пусто
 
 docker run -d --name pg-bind -v /tmp/pgdata-bind:/var/lib/postgresql/data \
-  -e POSTGRES_PASSWORD=secret postgres:16-alpine
+  -e POSTGRES_PASSWORD=secret dockerhub.timeweb.cloud/library/postgres:16-alpine
 
 sleep 3
-docker logs pg-bind 2>&1 | tail -10
-# Ожидаемо (в конце):
-# initdb: error: directory "/var/lib/postgresql/data" exists but is not empty
-# или PostgreSQL молча падает, и контейнер в статусе Exited (1)
 
-docker ps -a --filter name=pg-bind
-# Ожидаемо: Exited (1)
+/tmp/pgdata-bind# ls
+# PG_VERSION    pg_dynshmem    pg_multixact  pg_snapshots  pg_tblspc    postgresql.auto.conf
+# base          pg_hba.conf    pg_notify     pg_stat       pg_twophase  postgresql.conf
+# global        pg_ident.conf  pg_replslot   pg_stat_tmp   pg_wal       postmaster.opts
+# pg_commit_ts  pg_logical     pg_serial     pg_subtrans   pg_xact      postmaster.pid
+# постргрес прекрасно встал и создал в bind mount свои файлы при старте
 
 docker rm -f pg-bind
 ```
 
-**Почему:** в образе `postgres:16-alpine` в `/var/lib/postgresql/data` **уже есть** файлы (шаблоны, `PG_VERSION`, конфиги). Пустая папка на хосте **перекрывает** их (bind mount **не** копирует из образа — см. Lab 2C), и PostgreSQL **не может** инициализироваться.
-
 **Проверка, что в образе есть файлы:**
 
 ```bash
-docker run --rm postgres:16-alpine ls -la /var/lib/postgresql/data
-# Ожидаемо: есть файлы (PG_VERSION, pg_wal, ...)
+docker run --rm dockerhub.timeweb.cloud/library/postgres:16-alpine ls /var/lib/postgresql/data
+# при старте там ничего нет сразу же
 ```
 
 ### Часть B — работает с named volume
 
 ```bash
 docker run -d --name pg-vol -v pgdata:/var/lib/postgresql/data \
-  -e POSTGRES_PASSWORD=secret postgres:16-alpine
+  -e POSTGRES_PASSWORD=secret dockerhub.timeweb.cloud/library/postgres:16-alpine
 
-sleep 5
 docker logs pg-vol 2>&1 | tail -10
-# Ожидаемо: "database system is ready to accept connections"
+# database system is ready to accept connections
 
 docker ps --filter name=pg-vol
-# Ожидаемо: Up (healthy)
 
-# Проверим, что база работает
 docker exec pg-vol psql -U postgres -c 'SELECT version();'
-# Ожидаемо: PostgreSQL 16.x ...
+#  PostgreSQL 16.16 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+# (1 row)
 ```
 
-**Почему:** volume `pgdata` был **пуст**. Docker видит `VOLUME /var/lib/postgresql/data` в образе и **копирует** содержимое **в** volume при первом старте. PostgreSQL инициализируется **корректно**.
+**Почему:** volume `pgdata` был **пуст**. Docker видит `VOLUME /var/lib/postgresql/data` в образе и **создает** содержимое **в** volume при первом старте. PostgreSQL инициализируется **корректно**.
 
 ### Часть C — «а если очень хочется bind mount?»
 
-**Работает, если папка на хосте уже инициализирована** (например, восстановлена из бэкапа, или скопирована из другого работающего PostgreSQL):
+**Работает, если папка на хосте уже инициализирована или постгрес начинает с нуля** (например, восстановлена из бэкапа, или скопирована из другого работающего PostgreSQL):
 
 ```bash
 # Инициализируем /tmp/pgdata-bind2 из работающего volume
@@ -492,23 +490,23 @@ sudo chown -R 999:999 /tmp/pgdata-bind2
 
 # Запускаем
 docker run -d --name pg-bind-ok -v /tmp/pgdata-bind2:/var/lib/postgresql/data \
-  -e POSTGRES_PASSWORD=secret postgres:16-alpine
+  -e POSTGRES_PASSWORD=secret dockerhub.timeweb.cloud/library/postgres:16-alpine
 
 sleep 5
 docker logs pg-bind-ok 2>&1 | tail -3
-# Ожидаемо: "database system is ready to accept connections"
+# database system is ready to accept connections
 ```
 
-**Вывод:** bind mount работает **только** если папка на хосте **уже** содержит корректные данные PostgreSQL. Для **новой** базы — **named volume**.
+**Вывод:** bind mount работает **только** если папка на хосте **уже** содержит корректные данные PostgreSQL либо база начнет с нуля
 
 **Что записать:**
 
 | | **Named volume** | **Bind mount (пустой)** |
 |---|---|---|
-| Инициализация из образа | ✅ **Автоматически** | ❌ **Нет** (перекрывает) |
-| PostgreSQL стартует | ✅ | ❌ **Падает** |
+| Инициализация из образа | ✅ **Автоматически** | База встанет с нуля |
+| PostgreSQL стартует | ✅ | ✅, но с нуля |
 | Права | Docker управляет | Нужно `chown` вручную |
-| Для production | ✅ **Да** | ❌ Нет |
+| Для production | ✅ **Да** | Нет. То что работает с postgres не факт, что будет работать везде |
 
 ```bash
 docker rm -f pg-vol pg-bind-ok 2>/dev/null
@@ -536,7 +534,14 @@ docker run --rm -v mydata:/data alpine sh -c '
 '
 
 docker run --rm -v mydata:/data alpine sh -c 'find /data -type f | sort; echo "---"; du -sh /data'
-# Ожидаемо: file1.txt, subdir/file2.txt, big.bin; ~10MB
+# /data/big.bin
+# /data/file1.txt
+# /data/hi.txt
+# /data/log.txt
+# /data/shared.txt
+# /data/subdir/file2.txt
+# ---
+# 10.0M   /data
 ```
 
 ### Часть B — backup
@@ -556,7 +561,9 @@ ls -lh /tmp/backups/mydata-$TS.tar.gz
 # Контрольная сумма — для проверки целостности
 sha256sum /tmp/backups/mydata-$TS.tar.gz > /tmp/backups/mydata-$TS.sha256
 cat /tmp/backups/mydata-$TS.sha256
-# Ожидаемо: <hash>  /tmp/backups/mydata-YYYYMMDD-HHMMSS.tar.gz
+
+# -rw-r--r-- 1 root root 11M Nov 21 23:54 /tmp/backups/mydata-20261121-235445.tar.gz
+# d39ef00bdd38de0badd463f04dc50036057c715b57a31fa02421f2dafa592f49  /tmp/backups/mydata-20261121-235445.tar.gz
 ```
 
 **Почему `:ro`:** гарантирует, что `tar` **не** изменит данные и **не** будет писать в source.
@@ -585,7 +592,7 @@ echo "restoring: $TS"
 # Проверка checksum ПЕРЕД restore
 cd /tmp/backups
 sha256sum -c mydata-$TS.sha256
-# Ожидаемо: OK
+# /tmp/backups/mydata-20261121-235445.tar.gz: OK
 
 # Восстановление
 docker run --rm \
@@ -595,7 +602,17 @@ docker run --rm \
 
 # Проверка
 docker run --rm -v mydata:/data alpine sh -c 'find /data -type f | sort; echo "---"; du -sh /data; echo "---"; cat /data/file1.txt; cat /data/subdir/file2.txt'
-# Ожидаемо: те же файлы, те же 10MB, "important1", "important2"
+# /data/big.bin
+# /data/file1.txt
+# /data/hi.txt
+# /data/log.txt
+# /data/shared.txt
+# /data/subdir/file2.txt
+# ---
+# 10.0M   /data
+# ---
+# important1
+# important2
 ```
 
 **Вывод:** `tar` через временный контейнер — **универсальный** способ. Работает для **любого** volume, не зависит от ФС, легко автоматизируется. **Главное:** **проверять** restore — бэкап, который не восстанавливали, — это не бэкап.
@@ -621,11 +638,11 @@ docker run --rm -v mydata:/data alpine sh -c 'find /data -type f | sort; echo "-
 ```bash
 docker rm -f pg 2>/dev/null
 docker run -d --name pg -v pgdata:/var/lib/postgresql/data \
-  -e POSTGRES_PASSWORD=secret postgres:16-alpine
+  -e POSTGRES_PASSWORD=secret dockerhub.timeweb.cloud/library/postgres:16-alpine
 
 sleep 5
 docker exec pg pg_isready -U postgres
-# Ожидаемо: /var/run/postgresql:5432 - accepting connections
+# /run/postgresql:5432 - accepting connections
 ```
 
 ### Часть B — данные + WAL
@@ -636,15 +653,55 @@ docker exec pg psql -U postgres -c '
   INSERT INTO users (name) VALUES ($$alice$$), ($$bob$$), ($$charlie$$);
   SELECT * FROM users;
 '
-# Ожидаемо: 3 строки
+
+# CREATE TABLE
+# INSERT 0 3
+#  id |  name   |         created_at
+# ----+---------+----------------------------
+#   1 | alice   | 2026-11-21 21:13:12.772691
+#   2 | bob     | 2026-11-21 21:13:12.772691
+#   3 | charlie | 2026-11-21 21:13:12.772691
+# (3 rows)
 
 # Смотрим, что реально лежит в volume — WAL, база, всё
 docker run --rm -v pgdata:/data alpine ls -la /data
-# Ожидаемо: PG_VERSION, base/, pg_wal/, postgresql.conf, ...
+
+# total 136
+# drwx------   19 70       70            4096 Nov 21 21:12 .
+# drwxr-xr-x    1 root     root          4096 Nov 21 21:13 ..
+# -rw-------    1 70       70               3 Nov 21 20:50 PG_VERSION
+# drwx------    5 70       70            4096 Nov 21 20:50 base
+# drwx------    2 70       70            4096 Nov 21 21:12 global
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_commit_ts
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_dynshmem
+# -rw-------    1 70       70            5743 Nov 21 20:50 pg_hba.conf
+# -rw-------    1 70       70            2640 Nov 21 20:50 pg_ident.conf
+# drwx------    4 70       70            4096 Nov 21 21:12 pg_logical
+# drwx------    4 70       70            4096 Nov 21 20:50 pg_multixact
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_notify
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_replslot
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_serial
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_snapshots
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_stat
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_stat_tmp
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_subtrans
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_tblspc
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_twophase
+# drwx------    3 70       70            4096 Nov 21 20:50 pg_wal
+# drwx------    2 70       70            4096 Nov 21 20:50 pg_xact
+# -rw-------    1 70       70              88 Nov 21 20:50 postgresql.auto.conf
+# -rw-------    1 70       70           29925 Nov 21 20:50 postgresql.conf
+# -rw-------    1 70       70              24 Nov 21 21:12 postmaster.opts
+# -rw-------    1 70       70              90 Nov 21 21:12 postmaster.pid
 
 # WAL — журнал транзакций, может содержать несохранённые данные
 docker run --rm -v pgdata:/data alpine ls -la /data/pg_wal/
-# Ожидаемо: файлы 000000010000000000000001 и т.п.
+
+# total 16396
+# drwx------    3 70       70            4096 Nov 21 20:50 .
+# drwx------   19 70       70            4096 Nov 21 21:12 ..
+# -rw-------    1 70       70        16777216 Nov 21 21:13 000000010000000000000001
+# drwx------    2 70       70            4096 Nov 21 20:50 archive_status
 ```
 
 ### Часть C — `pg_dump` (логический бэкап) — **всегда консистентен**
@@ -655,7 +712,7 @@ mkdir -p /tmp/pg-backups
 docker exec pg pg_dump -U postgres -Fc > /tmp/pg-backups/pg-$(date +%Y%m%d-%H%M%S).dump
 
 ls -lh /tmp/pg-backups/
-# Ожидаемо: pg-YYYYMMDD-HHMMSS.dump, ~10-20KB
+# -rw-r--r-- 1 root root 2.9K Nov 22 00:14 pg-20261122-001458.dump
 ```
 
 **`-Fc`** — custom format, сжатый, восстанавливается через `pg_restore`. **Это правильный способ** для PostgreSQL.
@@ -670,7 +727,7 @@ docker run --rm \
   alpine tar czf /backup/pg-tar-$TS.tar.gz -C /source .
 
 ls -lh /tmp/pg-backups/pg-tar-*.tar.gz
-# Ожидаемо: ~5-15MB
+# -rw-r--r-- 1 root root 4.5M Nov 22 00:15 /tmp/pg-backups/pg-tar-20261122-001535.tar.gz
 ```
 
 **Проблема:** `tar` **не** делает `pg_start_backup` / `pg_stop_backup` — база **не** знает, что её снимают. В **этот момент** PostgreSQL может писать в файлы → **несогласованность**. Для **маленькой** БД без нагрузки обычно «прокатывает», но:
@@ -698,27 +755,27 @@ docker volume rm pgdata
 docker volume create pgdata
 
 docker run -d --name pg-restored -v pgdata:/var/lib/postgresql/data \
-  -e POSTGRES_PASSWORD=secret postgres:16-alpine
+  -e POSTGRES_PASSWORD=secret dockerhub.timeweb.cloud/library/postgres:16-alpine
 
 sleep 5
 docker exec pg-restored pg_isready -U postgres
+# /run/postgresql:5432 - accepting connections
 
 # Восстановление из dump
 DUMP=$(ls /tmp/pg-backups/pg-*.dump | tail -1)
 echo "restoring from: $DUMP"
+# restoring from: /tmp/pg-backups/pg-20261122-001458.dump
 
 docker exec -i pg-restored pg_restore -U postgres -d postgres --clean --if-exists < "$DUMP"
 
 # Проверка
 docker exec pg-restored psql -U postgres -c 'SELECT * FROM users;'
-# Ожидаемо: 3 строки (alice, bob, charlie) — данные восстановлены
-```
-
-**Проверка, что это **та же** база:**
-
-```bash
-docker exec pg-restored psql -U postgres -c 'SELECT count(*) FROM users;'
-# Ожидаемо: 3
+#  id |  name   |         created_at
+# ----+---------+----------------------------
+#   1 | alice   | 2026-11-21 21:13:12.772691
+#   2 | bob     | 2026-11-21 21:13:12.772691
+#   3 | charlie | 2026-11-21 21:13:12.772691
+# (3 rows)
 ```
 
 **Что записать:**
@@ -754,19 +811,17 @@ docker run --rm -v keep-data:/data alpine sh -c 'echo "important" > /data/keep.t
 
 # temp-data и orphan-data — "мусор" (или забытые)
 
-# Все три сейчас "свободны" (никакой контейнер их не использует)
 docker volume ls
-# Ожидаемо: keep-data, temp-data, orphan-data
+# Ожидаемо: keep-data, temp-data, orphan-data.
 
-# А теперь — "безобидная" чистка
 docker volume prune -f
-# Ожидаемо: Deleted Volumes: [все три]
+# Ожидаемо: не удалил контейнеры. Из документации докера: By default, it only removes anonymous volumes (https://docs.docker.com/reference/cli/docker/volume/prune/)
 
 docker volume ls
-# Ожидаемо: пусто — ВСЁ УДАЛЕНО, включая "important" из keep-data!
+# Ожидаемо: все три на месте
 
 docker run --rm -v keep-data:/data alpine cat /data/keep.txt 2>/dev/null || echo "volume keep-data не существует"
-# Ожидаемо: volume keep-data не существует
+# important
 ```
 
 **Как защититься** — **labels** + `--filter`:
@@ -785,10 +840,8 @@ docker volume ls
 ```
 
 **Что записать:**
-- **`docker volume prune` удаляет всё, что не подключено к запущенному контейнеру** — это **не** «безопасная» операция;
-- **labels + `--filter`** — способ защитить «важные» volumes;
+- **`docker volume prune` удаляет только анонимные контейнеры** — это безопасная операция;
 - **никогда** не запускать `prune` на проде без понимания, что будет удалено;
-- **альтернатива:** `--filter until=24h` — удалить только старые.
 
 ```bash
 docker volume rm critical-data temp-data 2>/dev/null
