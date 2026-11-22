@@ -13,23 +13,22 @@ wsl -d docker-desktop
 
 # 1. Проверить, что Docker daemon использует seccomp
 docker info --format '{{json .SecurityOptions}}' | python3 -m json.tool
-# Ожидаемо (фрагмент):
 # [
-#   "name=seccomp,profile=builtin",
-#   "name=cgroupns",
-#   ...
+#     "name=seccomp,profile=builtin",
+#     "name=cgroupns"
 # ]
 
-# 2. Проверить, что мы НЕ rootless (Docker Desktop — rootful)
-docker info --format 'Rootless={{.SecurityOptions}}' | grep -i rootless || echo "rootful (Docker Desktop)"
-# Ожидаемо: rootful (Docker Desktop) — это нормально
+# 2. Проверить, что мы rootful
+docker info --format '{{.SecurityOptions}}' | grep -q 'rootless' && echo "rootless" || echo "rootful (Docker Desktop)"
+# rootful (Docker Desktop)
+# Пустой вывод = grep не нашёл rootless = rootful
 
 # 3. Проверить, что user namespace ВЫКЛЮЧЕН (Docker Desktop default)
 docker info --format '{{.SecurityOptions}}' | tr ',' '\n' | grep -i userns || echo "userns не включён"
-# Ожидаемо: не включён
+# userns не включён
 ```
 
-**Записать:** `seccomp` **включён** (builtin), Docker Desktop **rootful** (rootless — только на Linux), `userns` **не включён** по умолчанию.
+**Записать:** `seccomp` **включён** (builtin), Docker Desktop **Rootful**, `userns` **не включён** по умолчанию.
 
 ---
 
@@ -41,11 +40,11 @@ docker info --format '{{.SecurityOptions}}' | tr ',' '\n' | grep -i userns || ec
 
 ```bash
 docker run --rm alpine id
-# Ожидаемо: uid=0(root) gid=0(root) groups=0(root)
+# uid=0(root) gid=0(root) groups=0(root),0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy),20(dialout),26(tape),27(video)
 
 docker run --rm alpine sh -c 'whoami; cat /etc/shadow 2>/dev/null | head -1'
-# Ожидаемо: root
-# root:*:19000:0:99999:7:::   ← может читать /etc/shadow
+# root
+# root:*::0:::::
 ```
 
 **Вывод:** контейнер **по умолчанию** — root. Может **читать** `/etc/shadow` (в **обычном** Linux это **только** root).
@@ -57,7 +56,7 @@ docker run -d --name rw alpine sleep 1000
 
 # Можем писать куда угодно
 docker exec rw sh -c 'echo "malicious" > /usr/local/bin/backdoor && ls -la /usr/local/bin/backdoor'
-# -rw-r--r--    1 root     root            10 Nov 22 00:00 /usr/local/bin/backdoor
+# -rw-r--r--    1 root     root            10 Nov 22 09:56 /usr/local/bin/backdoor
 
 # И даже в /etc
 docker exec rw sh -c 'echo "hacked" >> /etc/motd && cat /etc/motd'
@@ -74,14 +73,15 @@ docker rm -f rw
 
 ```bash
 docker run --rm alpine sh -c 'mount -t tmpfs none /mnt 2>&1'
-# Ожидаемо: mount: permission denied (are you root?)  ← нет CAP_SYS_ADMIN
-
-docker run --rm alpine sh -c 'cat /proc/kcore 2>&1 | head -1'
-# Ожидаемо: cat: can't open '/proc/kcore': Permission denied  ← нет CAP_SYS_RAWIO
+# mount: permission denied (are you root?)  ← нет CAP_SYS_ADMIN
 
 docker run --rm alpine sh -c 'capsh --print 2>/dev/null | grep Current' 2>/dev/null || \
   docker run --rm alpine sh -c 'grep Cap /proc/self/status'
-# Ожидаемо: CapEff: 00000000a80425fb  ← не все capabilities
+# CapInh: 0000000000000000
+# CapPrm: 00000000a80425fb
+# CapEff: 00000000a80425fb
+# CapBnd: 00000000a80425fb
+# CapAmb: 0000000000000000
 ```
 
 **Вывод:** root **внутри** контейнера **не** равен root **на хосте**. Docker **отбрасывает** опасные capabilities (например, `SYS_ADMIN`, `SYS_RAWIO`), поэтому **некоторые** действия **запрещены**. Но **оставшихся** 14 capabilities **достаточно** для **многих** атак.
@@ -121,9 +121,10 @@ EOF
 docker build -f Dockerfile.broken -t sec:broken .
 
 docker run --rm sec:broken
-# Ожидаемо:
-# starting as (uid=1000)
-# sh: can't create /app/data/file.txt: Permission denied
+# whoami: unknown uid 1000
+# starting as  (uid=1000)
+# wrote successfully
+# /app/app.sh: line 3: can't create /app/data/file.txt: Permission denied
 ```
 
 **Почему:** `/app/data` создан **от root** (до `USER`), `uid=1000` **не** имеет прав на запись.
@@ -143,17 +144,18 @@ EOF
 
 docker build -f Dockerfile.fixed -t sec:fixed .
 docker run --rm sec:fixed
-# Ожидаемо:
 # starting as appuser (uid=1000)
 # wrote successfully
 
 # Проверим, что процесс — НЕ root
 docker run -d --name check-user sec:fixed sleep 1000
 docker exec check-user ps aux | grep app.sh | grep -v grep
-# Ожидаемо: 1000 ... /app/app.sh  ← uid=1000
+# PID   USER     TIME  COMMAND
+#     1 appuser   0:00 sleep 1000
+#    13 appuser   0:00 ps aux
 
 docker exec check-user id
-# Ожидаемо: uid=1000(appuser) gid=1000(appuser) ...
+# uid=1000(appuser) gid=101(appgroup) groups=101(appgroup),101(appgroup)
 ```
 
 ### Часть C — `COPY --chown` (ещё лучше)
@@ -172,7 +174,8 @@ EOF
 
 docker build -f Dockerfile.best -t sec:best .
 docker run --rm sec:best
-# Ожидаемо: starting as appuser (uid=1000) / wrote successfully
+# starting as appuser (uid=1000)
+# wrote successfully
 ```
 
 **`COPY --chown`** сразу **ставит** правильного владельца — **без** отдельного `RUN chown` (меньше слоёв, быстрее).
@@ -213,14 +216,12 @@ rm -rf /tmp/sec-user
 
 ```bash
 docker run --rm alpine sh -c 'apk add --no-cache libcap >/dev/null 2>&1; capsh --print 2>/dev/null | grep Current || grep Cap /proc/self/status'
-# Ожидаемо: CapEff: 00000000a80425fb
+# Current: cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap=ep
+# Current IAB: !cap_dac_read_search,!cap_linux_immutable,!cap_net_broadcast,!cap_net_admin,!cap_ipc_lock,!cap_ipc_owner,!cap_sys_module,!cap_sys_rawio,!cap_sys_ptrace,!cap_sys_pacct,!cap_sys_admin,!cap_sys_boot,!cap_sys_nice,!cap_sys_resource,!cap_sys_time,!cap_sys_tty_config,!cap_lease,!cap_audit_control,!cap_mac_override,!cap_mac_admin,!cap_syslog,!cap_wake_alarm,!cap_block_suspend,!cap_audit_read,!cap_perfmon,!cap_bpf,!cap_checkpoint_restore
 
 # Расшифруем
 docker run --rm alpine sh -c 'apk add --no-cache libcap >/dev/null 2>&1; capsh --decode=00000000a80425fb'
-# Ожидаемо:
-# 0x00000000a80425fb=cap_chown,cap_dac_override,cap_fowner,cap_fsetid,
-# cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,
-# cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap
+# 0x00000000a80425fb=cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap
 ```
 
 **14 capabilities** по умолчанию. Из них **опасны** для атаки: `NET_RAW`, `SYS_CHROOT`, `MKNOD`, `SETUID`, `SETGID`, `DAC_OVERRIDE`.
@@ -229,16 +230,15 @@ docker run --rm alpine sh -c 'apk add --no-cache libcap >/dev/null 2>&1; capsh -
 
 ```bash
 docker run --rm --cap-drop=ALL alpine sh -c 'grep Cap /proc/self/status'
-# Ожидаемо: CapEff: 0000000000000000
-
-# Проверим, что ping (нужен CAP_NET_RAW) НЕ работает
-docker run --rm --cap-drop=ALL alpine ping -c 1 8.8.8.8 2>&1 | head -3
-# Ожидаемо: PING 8.8.8.8 (8.8.8.8): 56 data bytes
-# ping: permission denied (are you root?)  ← нет CAP_NET_RAW
+# CapInh: 0000000000000000
+# CapPrm: 0000000000000000
+# CapEff: 0000000000000000
+# CapBnd: 0000000000000000
+# CapAmb: 0000000000000000
 
 # Проверим, что mount (нужен CAP_SYS_ADMIN) НЕ работает
 docker run --rm --cap-drop=ALL alpine sh -c 'mkdir /mnt/test && mount -t tmpfs none /mnt/test 2>&1'
-# Ожидаемо: mount: permission denied
+# mount: permission denied (are you root?)
 ```
 
 ### Часть C — `--cap-add` только нужного
@@ -246,14 +246,21 @@ docker run --rm --cap-drop=ALL alpine sh -c 'mkdir /mnt/test && mount -t tmpfs n
 ```bash
 # Пинг с минимальными capabilities
 docker run --rm --cap-drop=ALL --cap-add=NET_RAW alpine ping -c 1 8.8.8.8
-# Ожидаемо: 1 packets transmitted, 1 received
+# --- 8.8.8.8 ping statistics ---
+# 1 packets transmitted, 1 packets received, 0% packet loss
+# round-trip min/avg/max = 62.663/62.663/62.663 ms
 
 # Проверим, что capabilities — только NET_RAW
 docker run --rm --cap-drop=ALL --cap-add=NET_RAW alpine sh -c 'grep Cap /proc/self/status'
 # Ожидаемо: CapEff: 0000000000002000  ← только NET_RAW (бит 13)
+# CapInh: 0000000000000000
+# CapPrm: 0000000000002000
+# CapEff: 0000000000002000
+# CapBnd: 0000000000002000
+# CapAmb: 0000000000000000
 
 docker run --rm --cap-drop=ALL --cap-add=NET_RAW alpine sh -c 'apk add --no-cache libcap >/dev/null 2>&1; capsh --decode=0000000000002000'
-# Ожидаемо: 0x0000000000002000=cap_net_raw
+# 0x0000000000002000=cap_net_raw
 ```
 
 ### Часть D — `nginx` с минимальными capabilities
@@ -262,14 +269,15 @@ docker run --rm --cap-drop=ALL --cap-add=NET_RAW alpine sh -c 'apk add --no-cach
 
 ```bash
 # С --cap-drop=ALL — nginx упадёт на bind 80
-docker run --rm --cap-drop=ALL nginx:alpine 2>&1 | grep -i 'bind\|permission' | head -3
-# Ожидаемо: nginx: [emerg] bind() to 0.0.0.0:80 failed (13: Permission denied)
+docker run --rm --cap-drop=ALL nginx:alpine 2>&1
+# 2026/11/22 17:57:22 [emerg] 1#1: chown("/var/cache/nginx/client_temp", 101) failed (1: Operation not permitted)
+# nginx: [emerg] chown("/var/cache/nginx/client_temp", 101) failed (1: Operation not permitted)
 
 # С NET_BIND_SERVICE — работает
 docker run -d --rm --name nginx-sec --cap-drop=ALL --cap-add=NET_BIND_SERVICE -p 8080:80 nginx:alpine
 sleep 2
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080
-# Ожидаемо: 200
+# 200
 
 docker stop nginx-sec
 ```
@@ -279,11 +287,12 @@ docker stop nginx-sec
 ```bash
 # С SYS_ADMIN — можно mount
 docker run --rm --cap-add=SYS_ADMIN alpine sh -c 'mkdir /mnt/test && mount -t tmpfs none /mnt/test && echo "mounted ok"'
-# Ожидаемо: mounted ok
+# mounted ok
 
 # С SYS_ADMIN — можно попытаться выйти на хост (упрощённый пример)
 docker run --rm --cap-add=SYS_ADMIN alpine sh -c 'cat /proc/self/mountinfo | head -1'
 # Видит mountinfo ХОСТА — не изолирован по mount namespace (частично)
+# 1049 878 0:133 / / rw,relatime - overlay overlay rw,lowerdir=/var/lib/docker/overlay2/l/7BNI23LEUXCNFOLVPVHZI732AM:/var/lib/docker/overlay2/l/CTAI6OTZ7WD7YZXDH2LH5E72JU,upperdir=/var/lib/docker/overlay2/a5604ff012df5d2d006fe9c297301a2a834b0558b172cc61ed8e879159c06b48/diff,workdir=/var/lib/docker/overlay2/a5604ff012df5d2d006fe9c297301a2a834b0558b172cc61ed8e879159c06b48/work
 ```
 
 **SYS_ADMIN** — **самая** опасная. Даёт **почти** полный root. **Никогда** не добавлять без **крайней** необходимости.
@@ -309,16 +318,14 @@ docker rmi nginx:alpine 2>/dev/null
 ```bash
 # 1. ptrace — блокирован по умолчанию
 docker run --rm alpine sh -c 'apk add --no-cache strace >/dev/null 2>&1; strace -e trace=write echo hello 2>&1 | head -3'
-# Ожидаемо: strace: ptrace(PTRACE_TRACEME, ...): Operation not permitted
-# (ptrace — заблокирован)
+# write(1, "hello\n", 6hello
+# )                  = 6
+# +++ exited with 0 +++
+
 
 # 2. kexec_load — блокирован
 docker run --rm alpine sh -c 'apk add --no-cache kexec-tools >/dev/null 2>&1; kexec -l /boot/vmlinuz 2>&1 | head -2'
-# Ожидаемо: kexec_load failed: Operation not permitted
-
-# 3. bpf — блокирован (в некоторых версиях)
-docker run --rm alpine sh -c 'apk add --no-cache bcc-tools >/dev/null 2>&1; bpftool prog list 2>&1 | head -2'
-# Ожидаемо: BPF: Permission denied (или "Operation not permitted")
+# Cannot open `/boot/vmlinuz': No such file or directory
 ```
 
 ### Часть B — `seccomp=unconfined` (опасно)
@@ -327,7 +334,6 @@ docker run --rm alpine sh -c 'apk add --no-cache bcc-tools >/dev/null 2>&1; bpft
 # Отключаем seccomp — ptrace работает
 docker run --rm --security-opt seccomp=unconfined alpine sh -c \
   'apk add --no-cache strace >/dev/null 2>&1; strace -e trace=write echo hello 2>&1 | head -3'
-# Ожидаемо:
 # write(1, "hello\n", 6)              = 6
 # +++ exited with 0 +++
 # (ptrace работает)
@@ -368,7 +374,6 @@ EOF
 
 docker run --rm --security-opt seccomp=/tmp/sec-seccomp/profile.json alpine \
   sh -c 'apk add --no-cache strace >/dev/null 2>&1; strace -e trace=write echo hello 2>&1 | head -3'
-# Ожидаемо:
 # write(1, "hello\n", 6)              = 6
 # +++ exited with 0 +++
 # (ptrace разрешён, хотя seccomp не unconfined)
@@ -408,21 +413,21 @@ rm -rf /tmp/sec-seccomp
 
 ```bash
 docker run --rm --read-only alpine sh -c 'echo "test" > /tmp/f.txt'
-# Ожидаемо: sh: can't create /tmp/f.txt: Read-only file system
+# sh: can't create /tmp/f.txt: Read-only file system <- записать нельзя
 
 docker run --rm --read-only alpine sh -c 'cat /etc/os-release | head -1'
-# Ожидаемо: NAME="Alpine Linux"  ← чтение работает
+# NAME="Alpine Linux"  ← чтение работает
 ```
 
 ### Часть B — `--read-only` + `--tmpfs /tmp`
 
 ```bash
 docker run --rm --read-only --tmpfs /tmp:size=10m alpine sh -c 'echo "test" > /tmp/f.txt && cat /tmp/f.txt'
-# Ожидаемо: test  ← /tmp writable, остальное read-only
+# test  ← /tmp writable, остальное read-only
 
 # Проверим, что /etc всё ещё read-only
 docker run --rm --read-only --tmpfs /tmp:size=10m alpine sh -c 'echo "x" > /etc/hosts'
-# Ожидаемо: sh: can't create /etc/hosts: Read-only file system
+# sh: can't create /etc/hosts: Read-only file system
 ```
 
 ### Часть C — `--read-only` + volume
@@ -439,11 +444,11 @@ docker run --rm --read-only \
     echo "temp" > /tmp/temp.txt &&
     echo "rootfs" > /etc/broken 2>&1 | head -1
   '
-# Ожидаемо: sh: can't create /etc/broken: Read-only file system (но data.txt и temp.txt записаны)
+# sh: can't create /etc/broken: Read-only file system (но data.txt и temp.txt записаны)
 
 # Проверим
 docker run --rm -v sec-ro-data:/data alpine cat /data/data.txt
-# Ожидаемо: persistent
+# persistent
 
 docker volume rm sec-ro-data
 ```
@@ -459,7 +464,7 @@ docker run -d --rm --name nginx-ro \
   --tmpfs /var/run:size=1m \
   --tmpfs /var/log/nginx:size=10m \
   -p 8081:80 \
-  nginx:alpine
+  dockerhub.timeweb.cloud/library/nginx:alpine
 
 sleep 2
 docker ps --filter name=nginx-ro
@@ -510,7 +515,11 @@ docker run --rm --user 1000:1000 alpine sh -c '
   echo "before: $(id -u)"
   su-exec root id 2>&1 || echo "su-exec failed"
 '
-# Ожидаемо: "before: 1000" / "su-exec failed" — не смог стать root (нет setuid-бита в alpine)
+
+# before: 1000
+# sh: su-exec: not found
+# su-exec failed
+# не смог стать root (нет setuid-бита в alpine)
 ```
 
 **Стоп.** В alpine `su-exec` **не** имеет setuid-бита — поэтому **не** повышает права. **Нужен** реальный setuid-бинарник. Используем **`sudo`**:
@@ -553,18 +562,16 @@ docker build -t sec:suid .
 
 ```bash
 docker run --rm sec:suid sh -c 'id -u; /usr/local/bin/checkuid'
-# Ожидаемо:
 # 1000
-# uid=0  ← setuid-бинарник ПОВЫСИЛ права до root
+# uid=1000
 ```
 
 ### Часть C — с `no-new-privileges` — setuid **заблокирован**
 
 ```bash
 docker run --rm --security-opt no-new-privileges:true sec:suid sh -c 'id -u; /usr/local/bin/checkuid'
-# Ожидаемо:
 # 1000
-# uid=1000  ← setuid-бинарник НЕ повысил права (no-new-privileges)
+# uid=1000
 ```
 
 **Вывод:** `no-new-privileges:true` **гарантирует**, что процесс **не** получит **новых** привилегий через `execve`. Даже **если** в образе **есть** setuid-бинарник — он **не** повысит права.
@@ -589,11 +596,14 @@ docker rmi sec:suid 2>/dev/null
 
 ```bash
 docker info --format '{{json .SecurityOptions}}' | python3 -m json.tool
-# Ожидаемо: ["name=seccomp,profile=builtin","name=cgroupns"]
+# [
+#     "name=seccomp,profile=builtin",
+#     "name=cgroupns"
+# ]
 # НЕТ "name=rootless"
 
 docker info --format '{{.DockerRootDir}}'
-# Ожидаемо: /var/lib/docker  ← требует root на хосте WSL
+# /var/lib/docker  ← требует root на хосте WSL
 ```
 
 **Docker Desktop** работает **rootful** — демон **запущен** от root **в WSL VM**. Rootless **недоступен** (или **ограничен**).
@@ -624,10 +634,8 @@ docker exec userns-test cat /proc/self/uid_map
 # Ожидаемо (rootful): 0 0 4294967295  ← контейнер root = хост root (нет маппинга)
 
 docker inspect userns-test --format '{{.State.Pid}}'
-# PID в namespace хоста
-HOST_PID=$(docker inspect userns-test --format '{{.State.Pid}}')
-cat /proc/$HOST_PID/status | grep Uid
-# Ожидаемо (rootful): Uid: 0 0 0 0  ← хост-UID = 0 (root)
+# 3479
+
 
 docker rm -f userns-test
 ```
@@ -692,7 +700,7 @@ docker run -d --name bad --cap-add=ALL --security-opt seccomp=unconfined --privi
 
 # 1. root
 docker exec bad id
-# uid=0(root)
+# uid=0(root) gid=0(root) groups=0(root),0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy),20(dialout),26(tape),27(video)
 
 # 2. Все capabilities
 docker exec bad capsh --print 2>/dev/null | grep Current || grep Cap /proc/1/status
@@ -700,7 +708,9 @@ docker exec bad capsh --print 2>/dev/null | grep Current || grep Cap /proc/1/sta
 
 # 3. ptrace работает
 docker exec bad sh -c 'apk add --no-cache strace >/dev/null 2>&1; strace -e trace=write echo hi 2>&1 | head -2'
-# write(1, "hi\n", 3) = 3  ← ptrace разрешён
+# write echo hi 2>&1 | head -2'
+# write(1, "hi\n", 3hi
+# )                     = 3
 
 # 4. rootfs writable
 docker exec bad sh -c 'echo hack > /etc/hacked && cat /etc/hacked'
@@ -767,6 +777,22 @@ docker logs good
 #   read-only ✓
 # ptrace test:
 #   ptrace blocked ✓
+
+# Действительность:
+# running as: uid=1000(appuser) gid=101(appgroup) groups=101(appgroup),101(appgroup)
+# capabilities:
+# CapInh: 0000000000000000
+# CapPrm: 0000000000000000
+# CapEff: 0000000000000000
+# CapBnd: 0000000000000000
+# CapAmb: 0000000000000000
+# rootfs test:
+#   read-only ✓
+# /app/entrypoint.sh: line 4: can't create /etc/test: Read-only file system
+# ptrace test:
+#   ptrace blocked ✓
+# setuid test:
+#   setuid test skipped
 ```
 
 ### Часть C — проверить, что **каждый** слой **блокирует**
@@ -793,7 +819,7 @@ docker exec good sh -c 'echo hack > /etc/test 2>&1' | head -1
 
 # 6. Даже если приложение скомпрометировано — атакующий получает uid=1000
 docker exec good id
-# uid=1000(appuser) gid=1000(appuser)
+# uid=1000(appuser) gid=101(appgroup) groups=101(appgroup),101(appgroup)
 
 docker rm -f good
 ```
