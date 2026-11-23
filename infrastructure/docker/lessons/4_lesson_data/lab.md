@@ -423,6 +423,11 @@ docker inspect sec --format '{{range .Mounts}}{{.Type}} {{.Source}} → {{.Desti
 rm -f /tmp/secret.txt
 ```
 
+Дополнительно: 
+
+- **Урок 4.5** (дополнительный). Регистри и supply chain: cosign, SBOM, admission control.
+- **Урок 4.7** (дополнительный). Docker daemon и ОС: `daemon.json`, `systemd`, `containerd` vs `dockerd`.
+
 ---
 
 ## Lab 5. PostgreSQL + пустой bind mount = крах — 25 мин

@@ -950,5 +950,3 @@ docker rmi nginx-sec 2>/dev/null
 - **Урок 6 (Ресурсы):** `--memory`, `--cpus`, `--pids-limit`, cgroup v2, OOM.
 - **Урок 7 (Compose + CI/CD):** `docker compose`, `buildx bake`, GitHub Actions.
 - **Урок 8 (Отладка в проде):** `exec`, `nsenter`, traces, structured logs, `docker events`.
-- **Урок 4.5 (Регистри):** теги, digest, scan, sign.
-- **Урок 4.7 (Daemon):** `daemon.json`, log drivers, live-restore.
