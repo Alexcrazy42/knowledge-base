@@ -12,18 +12,11 @@
 wsl -d docker-desktop
 ```
 
-**Проверка версии cgroup:**
-
-```bash
-stat -fc %T /sys/fs/cgroup/
-# cgroup2fs     ← cgroup v2. Если "tmpfs" — у тебя cgroup v1, лабы 5 и 6 придётся адаптировать (пути /sys/fs/cgroup/memory/...)
-```
-
 **Проверка инструментов на хосте (WSL `docker-desktop`):**
 
 ```bash
 nsenter --version
-# nsenter from util-linux 2.39.x
+# nsenter from util-linux 2.41.6
 
 strace -V
 # strace -- version 6.x
@@ -79,17 +72,12 @@ docker exec lab8-exec sh -c '
   echo "--- pids in cgroup ---"
   cat /sys/fs/cgroup/cgroup.procs | wc -l
 '
-```
-
-**Ожидаемо:**
-
-```
---- memory.current ---
-1234567
---- memory.max ---
-67108864          ← 64 MiB = 64 * 1024 * 1024
---- pids in cgroup ---
-1
+# --- memory.current ---
+# 7225344
+# --- memory.max ---
+# 67108864
+# --- pids in cgroup ---
+# 4
 ```
 
 `memory.max` совпадает с `--memory=64M`. `exec`-процесс — **внутри** этой cgroup.
@@ -102,8 +90,9 @@ docker exec lab8-exec sh -c '
 PID=$(docker inspect --format '{{.State.Pid}}' lab8-exec)
 echo "PID=$PID"
 
-sudo nsenter --target "$PID" --mount --uts --ipc --net --pid -- \
-  sh -c 'cat /proc/self/cgroup; echo "---"; cat /sys/fs/cgroup/memory.max 2>&1'
+sudo nsenter --target "$PID" --mount --uts --ipc --net --pid -- sh -c 'cat /proc/self/cgroup; echo "---"; cat /sys/fs/cgroup/memory.max 2>&1'
+# max
+# без лимита
 ```
 
 **Ожидаемо:** `memory.max` **не** равен 64M — либо `max` (без лимита), либо путь ведёт к **root** cgroup хоста. Это значит, что процесс, запущенный через `nsenter`, **не ограничен** 64M памяти контейнера.
@@ -115,8 +104,7 @@ sudo nsenter --target "$PID" --mount --uts --ipc --net --pid -- \
 docker exec lab8-exec sh -c 'echo "exec: try 200MB"; python3 -c "x = bytearray(200*1024*1024)"' 2>&1 | tail -2
 
 # Через nsenter: те же 200MB — проходят (лимита нет)
-sudo nsenter --target "$PID" --mount --uts --ipc --net --pid -- \
-  sh -c 'echo "nsenter: try 200MB"; python3 -c "x = bytearray(200*1024*1024); print(\"OK\", len(x))"' 2>&1 | tail -2
+sudo nsenter --target "$PID" --mount --uts --ipc --net --pid sh -c 'echo "nsenter: try 200MB"; python3 -c "x = bytearray(200*1024*1024); print(\"OK\", len(x))"' 2>&1 | tail -2
 ```
 
 **Ожидаемо:** первая команда — ошибка/OOM (python умирает с `MemoryError` или `Killed`); вторая — `OK 209715200`. Это **и есть** разница: `nsenter` обходит cgroup, `exec` — нет.
@@ -469,9 +457,13 @@ docker kill lab8-events       # kill, die (SIGKILL → exit 137)
 **Ожидаемо** (в потоке первого терминала):
 
 ```
-2026-11-23T16:01:00.000000000+03:00 start lab8-events
-2026-11-23T16:01:05.000000000+03:00 kill lab8-events
-2026-11-23T16:01:05.000000000+03:00 die lab8-events
+1795459096 kill lab8-events
+1795459099 kill lab8-events
+1795459099 stop lab8-events
+1795459099 die lab8-events
+1795459102 start lab8-events
+1795459105 kill lab8-events
+1795459105 die lab8-events
 ```
 
 ### Часть B — `die` с `exitCode`: различаем `SIGTERM` и `SIGKILL`
@@ -479,18 +471,15 @@ docker kill lab8-events       # kill, die (SIGKILL → exit 137)
 ```bash
 # SIGTERM (штатная остановка)
 docker stop lab8-events
-docker events --since 1m --until 0s \
-  --filter 'container=lab8-events' --filter 'event=die' \
-  --format '{{.Time}} die exitCode={{.Actor.Attributes.exitCode}}'
-# 2026-11-23T... die exitCode=143     ← 128 + 15 (SIGTERM)
+docker events --since 1m --until 0s --filter 'container=lab8-events' --filter 'event=die'  --format '{{.Time}} die exitCode={{.Actor.Attributes.exitCode}}'
+# 1795459099 die exitCode=137
+# 1795459105 die exitCode=137
 
 # SIGKILL (жёстко)
 docker start lab8-events
 docker kill lab8-events
-docker events --since 1m --until 0s \
-  --filter 'container=lab8-events' --filter 'event=die' \
-  --format '{{.Time}} die exitCode={{.Actor.Attributes.exitCode}}'
-# 2026-11-23T... die exitCode=137     ← 128 + 9 (SIGKILL)
+docker events --since 1m --until 0s --filter 'container=lab8-events' --filter 'event=die' --format '{{.Time}} die exitCode={{.Actor.Attributes.exitCode}}'
+# 1795459175 die exitCode=137
 ```
 
 **Ожидаемо:** `143` для `stop`, `137` для `kill`. Если `137` **без** `kill` — это **OOM** (см. Lab 5).
@@ -505,8 +494,7 @@ docker run -d --name lab8-health \
   dockerhub.timeweb.cloud/library/alpine:3.20 sleep 300
 
 # Поток событий только по healthcheck
-docker events --filter 'container=lab8-health' --filter 'event=health_status' \
-  --format '{{.Time}} {{.Action}} status={{.Actor.Attributes.health_status}}'
+docker events --filter 'container=lab8-health' --filter 'event=health_status' --format '{{.Time}} {{.Action}} status={{.Actor.Attributes.health_status}}'
 ```
 
 **В другом терминале:**
@@ -521,9 +509,8 @@ docker exec lab8-health rm /tmp/healthy        # → unhealthy (если healthc
 **Ожидаемо:**
 
 ```
-... health_status status=unhealthy
-... health_status status=healthy
-... health_status status=unhealthy
+1795459230 health_status: healthy status=<no value>
+1795459236 health_status: unhealthy status=<no value>
 ```
 
 ### Часть D — формат для алертинга
@@ -571,15 +558,11 @@ docker exec lab8-mem sh -c '
   echo "swap.max: $(cat /sys/fs/cgroup/memory.swap.max 2>/dev/null || echo n/a)"
   echo "pids.max: $(cat /sys/fs/cgroup/pids.max)"
 '
-```
 
-**Ожидаемо:**
-
-```
-current: ~31457280 bytes      ← ~30 MiB (python idle)
-max:     67108864 bytes      ← 64 MiB
-swap.max: 0
-pids.max: max
+# current: 6656000 bytes
+# max:     67108864 bytes
+# swap.max: 67108864
+# pids.max: max
 ```
 
 `current`/`max` — **главный индикатор** риска OOM. Если `current` близко к `max` — следующий allocation может стать последним.
@@ -618,7 +601,8 @@ docker inspect lab8-oom-live --format 'State.OOMKilled={{.State.OOMKilled}}'
 
 docker exec lab8-oom-live sh -c 'grep -E "^(oom|oom_kill)" /sys/fs/cgroup/memory.events'
 # oom 1
-# oom_kill 1               ← АВТОРИТЕТНЫЙ источник: OOM БЫЛ
+# oom_kill 1
+# oom_group_kill 0
 ```
 
 **Это и есть тот самый кейс:** `OOMKilled=false` (Docker’s флаг), но `memory.events.oom_kill=1` (реальный факт). В cgroup v2 **всегда** проверяй `memory.events`, если подозреваешь OOM.
@@ -634,17 +618,15 @@ docker run -d --name lab8-cpu --cpus=0.1 \
 sleep 5
 
 docker exec lab8-cpu sh -c 'cat /sys/fs/cgroup/cpu.stat'
-```
-
-**Ожидаемо:**
-
-```
-usage_usec 500000
-user_usec 500000
-system_usec 0
-nr_periods 500
-nr_throttled 480       ← почти каждый период — throttled
-throttled_usec 450000
+# usage_usec 588252
+# user_usec 567968
+# system_usec 20284
+# nice_usec 0
+# nr_periods 58
+# nr_throttled 58
+# throttled_usec 5766236
+# nr_bursts 0
+# burst_usec 0
 ```
 
 - `nr_periods` — сколько 100ms-периодов прошло.
@@ -673,9 +655,9 @@ docker run -d --name lab8-pids --pids-limit=10 \
   dockerhub.timeweb.cloud/library/alpine:3.20 sleep 600
 
 docker exec lab8-pids sh -c '
-  echo "current: $(cat /sys/fs/cgroup/pids.current)"
-  echo "max:     $(cat /sys/fs/cgroup/pids.max)"
-  echo "--- попытка запустить 20 sleep'ов ---"
+  echo current: $(cat /sys/fs/cgroup/pids.current)
+  echo max:     $(cat /sys/fs/cgroup/pids.max)
+  echo --- попытка запустить 20 sleep'ов ---
   for i in $(seq 1 20); do sleep 0.01 & done 2>&1 | head -5
   wait
 ' 2>&1 | head -10
@@ -715,7 +697,7 @@ docker run --name lab8-dead-1 dockerhub.timeweb.cloud/library/alpine:3.20 \
   sh -c 'echo "starting"; sleep 1; echo "oops" >&2; exit 1'
 
 docker ps -a --filter 'name=lab8-dead-1' --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
-# lab8-dead-1   Exited (1) 2 seconds ago   alpine:3.20
+# lab8-dead-1   Exited (1) 10 seconds ago   dockerhub.timeweb.cloud/library/alpine:3.20
 ```
 
 **Сценарий 2: OOM (`exit 137`)**
@@ -765,9 +747,9 @@ docker inspect lab8-dead-137 --format '
 ```
 Status:     exited
 ExitCode:   137
-OOMKilled:  true          ← вот и ответ: OOM
-StartedAt:  2026-11-23T...
-FinishedAt: 2026-11-23T...
+OOMKilled:  true
+StartedAt:  2026-11-23T18:56:20.229117665Z
+FinishedAt: 2026-11-23T18:56:20.405447736Z
 RestartCount: 0
 RestartPolicy: no
 ```
@@ -778,9 +760,11 @@ RestartPolicy: no
 docker events --since 5m --until 0s \
   --filter 'container=lab8-dead-137' \
   --format '{{.Time}} {{.Action}} exitCode={{.Actor.Attributes.exitCode}}'
-# 2026-11-23T... create exitCode=
-# 2026-11-23T... start exitCode=
-# 2026-11-23T... die exitCode=137
+# 1795460180 create exitCode=<no value>
+# 1795460180 attach exitCode=<no value>
+# 1795460180 start exitCode=<no value>
+# 1795460180 oom exitCode=<no value>
+# 1795460180 die exitCode=137
 ```
 
 **Шаг 4. `logs` — только теперь**
